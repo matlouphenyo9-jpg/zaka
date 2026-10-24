@@ -71,6 +71,8 @@ export interface Essentials {
   fare_single_cents?: number | null;
   trips_per_day?: number | null;
   price_ref?: string | null;
+  km_each_way?: string | null;
+  l_per_100km?: string | null;
 }
 
 export interface PlanProfile {
