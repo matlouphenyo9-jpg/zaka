@@ -9,7 +9,6 @@
   "beta_badge": "beta",
   "source_badge": "reviewed source",
   "english_only_note": "Some screens are still in English while translations are reviewed.",
-
   "auth_title": "Sign in to Zaka",
   "auth_signup_title": "Create your Zaka account",
   "auth_email": "Email",
@@ -25,7 +24,6 @@
   "auth_error": "We couldn't sign you in. Check your email and password.",
   "auth_offline": "You need a connection to sign in the first time.",
   "signing_in": "Signing in…",
-
   "consent_title": "Before we start",
   "consent_body": "Zaka uses the money details you enter to show your cash-flow estimate and explain possible risks. You can correct or delete your entries. If you ask Zaka to check a message, the text may be processed by our AI service; remove PINs, one-time codes and account details first. Zaka does not move money or decide whether you qualify for credit. Continue only if you agree.",
   "consent_points_1": "Your entries are private to your account.",
@@ -33,7 +31,6 @@
   "consent_points_3": "You can delete everything from the Me screen.",
   "consent_agree": "I agree — continue",
   "consent_decline": "Not now",
-
   "onb_step": "Step {n} of {total}",
   "onb_money_title": "Money on hand now",
   "onb_money_hint": "Cash in your pocket plus what's in the bank. A rough number is fine.",
@@ -62,7 +59,6 @@
   "km_each_way": "Kilometres each way",
   "litres_per_100": "Litres per 100 km",
   "car_cost": "Fuel about {amount} a day",
-
   "mode_taxi": "Minibus taxi",
   "mode_bus": "Bus (MyCiTi, Rea Vaya, A Re Yeng…)",
   "mode_metrorail": "Train (Metrorail)",
@@ -70,7 +66,6 @@
   "mode_car": "Own car",
   "mode_walk": "Walk",
   "mode_other": "Other",
-
   "cat_opening_balance": "Starting balance",
   "cat_income": "Money in",
   "cat_grant": "Grant",
@@ -91,7 +86,6 @@
   "cat_health": "Health",
   "cat_household": "Household",
   "cat_other": "Other",
-
   "src_cash": "Cash",
   "src_bank": "Bank",
   "src_grant": "Grant",
@@ -99,7 +93,6 @@
   "src_trade": "Selling",
   "src_salary": "Salary",
   "src_other": "Other",
-
   "money_in": "Money in",
   "money_out": "Money out",
   "type_it": "Type it",
@@ -118,7 +111,6 @@
   "undo": "Undo",
   "shortfall_moved": "Your tight day moved from {from} to {to}.",
   "shortfall_cleared": "No shortfall predicted in the next 14 days now.",
-
   "conf_low": "Low",
   "conf_medium": "Medium",
   "conf_high": "High",
@@ -132,14 +124,12 @@
   "synthetic_badge": "Synthetic demo data",
   "until_next": "until your next likely money",
   "until_cap": "for the next 14 days",
-
   "ins_monthly_income": "Your {source} of about {amount} usually arrives around the {day}th — seen {count} times.",
   "ins_recurring_weekly": "{source} of about {amount} usually comes on {weekday}s — seen {count} times.",
   "ins_piece_jobs": "You get about {perWeek} piece jobs a week, usually around {amount}.",
   "ins_tight_day": "Money is usually tightest around the {day}th of the month.",
   "ins_busy_weekday": "{weekday} is usually your biggest spending day (about {amount}).",
   "ins_shortfall_gap": "About {amount} more over the next 14 days would cover the gap from {date}.",
-
   "plan_balance_now": "Money now",
   "plan_expected": "{source} · {weight}",
   "weight_confirmed": "confirmed (counted in full)",
@@ -175,7 +165,6 @@
   "remove": "Remove",
   "per_day": "{amount} a day",
   "close": "Close",
-
   "safety": "Safety",
   "scam_intro": "Paste an SMS, WhatsApp or email. Zaka checks it for common warning signs on this phone first.",
   "scam_level_high": "High risk",
@@ -201,7 +190,6 @@
   "flag_new_number": "\"New number\" or family-in-trouble story",
   "flag_personal_info": "Asks for ID, card or account details",
   "flag_prompt_injection": "Contains instructions aimed at software",
-
   "loan_intro": "Enter the lender's written terms. Zaka adds them up in rands.",
   "loan_type": "Type of credit",
   "loan_type_short_first": "Short-term loan (first one this year)",
@@ -222,7 +210,6 @@
   "loan_ncr_check": "Check the lender is NCR-registered",
   "loan_rights": "A lender may never keep your SASSA card, bank card or ID.",
   "loan_per_month": "About {amount} a month",
-
   "me": "Me",
   "me_language": "Language",
   "me_profile": "My details",
@@ -243,7 +230,6 @@
   "me_about_body": "Zaka is built by JustIT Solutions. All maths is done by code on your phone and is shown in \"Why this estimate?\". AI is only used to read a sentence you type and to explain scam warning signs.",
   "me_version": "Version {v}",
   "me_offline_cache": "Works offline: your last plan and new entries are kept on this phone.",
-
   "error_generic": "Something went wrong. Your entries are safe on this phone.",
   "loading": "Loading…",
   "required": "Required",
@@ -254,5 +240,6 @@
   "weekday_3": "Wednesday",
   "weekday_4": "Thursday",
   "weekday_5": "Friday",
-  "weekday_6": "Saturday"
+  "weekday_6": "Saturday",
+  "scam_example": "Try example {n}"
 }
