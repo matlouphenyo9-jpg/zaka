@@ -1,0 +1,31 @@
+// Live checks that the shared judge account is protected (B2 step 6).
+import { createClient } from '@supabase/supabase-js';
+const URL = 'https://dalhthsxuyttsgyigwgd.supabase.co', KEY = 'sb_publishable_3gDDWCLElWvPr_9TYTD81A_DKSKG4Mr';
+const c = createClient(URL, KEY, { auth: { persistSession: false } });
+let pass = 0, fail = 0;
+const ok = (n, cond, x = '') => { cond ? pass++ : fail++; console.log(`${cond ? 'PASS' : 'FAIL'}  ${n}${x ? '  — ' + x : ''}`); };
+const s = await c.auth.signInWithPassword({ email: 'demo@zaka.app', password: 'Zaka2026!demo' });
+ok('demo can sign in', !s.error, s.error?.message);
+const uid = s.data.user.id;
+const pw = await c.auth.updateUser({ password: 'Hijacked!12345' });
+ok('demo password cannot be changed', !!pw.error, pw.error?.message);
+const em = await c.auth.updateUser({ email: 'attacker@zaka-qa.test' });
+ok('demo email cannot be changed', !!em.error, em.error?.message);
+const meta = await c.auth.updateUser({ data: { note: 'x' } });
+ok('harmless metadata update still works (not blocked by the guard)', !meta.error, meta.error?.message);
+const again = await createClient(URL, KEY, { auth: { persistSession: false } }).auth.signInWithPassword({ email: 'demo@zaka.app', password: 'Zaka2026!demo' });
+ok('demo password still works afterwards', !again.error);
+const del = await c.rpc('delete_my_data');
+ok('demo cannot delete itself', !!del.error, del.error?.message);
+// entry cap: fresh seed, then insert until the cap
+await c.rpc('seed_demo', { p_user: uid });
+const rows = Array.from({ length: 60 }, () => ({ direction: 'out', amount_cents: 100, category: 'food', source: 'cash', occurred_on: new Date().toISOString().slice(0, 10) }));
+const bulk = await c.from('transactions').insert(rows);
+ok('60 demo entries allowed', !bulk.error, bulk.error?.message);
+const over = await c.from('transactions').insert({ direction: 'out', amount_cents: 100, category: 'food', source: 'cash', occurred_on: new Date().toISOString().slice(0, 10) });
+ok('61st demo entry blocked', !!over.error, over.error?.message);
+const reset = await c.rpc('seed_demo', { p_user: uid });
+const after = await c.from('transactions').select('id', { count: 'exact', head: true });
+ok('reset restores the 100 seed rows', !reset.error && after.count === 100, `${after.count}`);
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);

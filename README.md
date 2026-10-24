@@ -36,3 +36,5 @@ npm run test:injection  # prompt-injection + input validation against the Edge F
 ```
 Edge Functions: `supabase/functions/{parse-entry,explain-scam}`; shared parser copied from `src/engine` by `npm run sync:functions`.
 Secrets (set in Supabase, never in this repo): `ANTHROPIC_API_KEY`, optional `ALLOWED_ORIGINS` (comma-separated production origins).
+npm run test:ai         # parse-entry + explain-scam live in all 5 locales
+node tests/demo-guard.mjs  # judge account protections (login can't be changed/deleted, 60-entry cap)

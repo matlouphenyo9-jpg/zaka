@@ -186,8 +186,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             await runOp(q[0]);
           } catch (e) {
             const err = e as { code?: string; message?: string };
-            // A row the server rejects (validation/RLS) would block the queue forever; drop it, keep network errors.
-            if (err.code && /^(22|23|42)/.test(err.code)) console.warn('Dropped invalid queued write', err.code);
+            // A row the server rejects (validation, RLS, demo limits) would block the queue forever; drop it, keep network errors.
+            if (err.code && /^(22|23|42|54|P0)/.test(err.code)) console.warn('Dropped invalid queued write', err.code);
             else {
               stalled = true;
               break;

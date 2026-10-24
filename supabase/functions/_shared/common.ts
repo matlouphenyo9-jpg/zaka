@@ -1,7 +1,7 @@
 // Shared Edge Function plumbing: CORS allow-list, auth, per-user rate limits, no-PII logging.
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 
-const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://localhost:4173', 'https://zaka.pages.dev'];
+const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://localhost:4173', 'https://zaka.pages.dev', 'https://zaka.jis-tech.co.za'];
 const ALLOWED = (Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 const ORIGINS = ALLOWED.length ? ALLOWED : DEFAULT_ORIGINS;
 
@@ -41,15 +41,23 @@ export async function userFrom(req: Request): Promise<string | null> {
   return error || !data.user ? null : data.user.id;
 }
 
-/** Counts this call and says whether the user is within the hourly and daily limits. */
+/** Project-wide daily AI budget per function: caps cost even if someone farms many accounts. */
+const GLOBAL_PER_DAY: Record<string, number> = { 'parse-entry': 3000, 'explain-scam': 600 };
+
+/** Counts this call and says whether the user (and the whole project) is within the limits. */
 export async function withinLimit(userId: string, fn: string, perHour: number, perDay: number): Promise<boolean> {
   const hourAgo = new Date(Date.now() - 3600_000).toISOString();
   const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-  const [h, d] = await Promise.all([
+  const [h, d, g] = await Promise.all([
     admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('fn', fn).gte('created_at', hourAgo),
     admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('fn', fn).gte('created_at', dayAgo),
+    admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('fn', fn).gte('created_at', dayAgo),
   ]);
   if ((h.count ?? 0) >= perHour || (d.count ?? 0) >= perDay) return false;
+  if ((g.count ?? 0) >= (GLOBAL_PER_DAY[fn] ?? 1000)) {
+    log(fn, 'global_budget_reached');
+    return false;
+  }
   await admin.from('ai_usage').insert({ user_id: userId, fn });
   return true;
 }
