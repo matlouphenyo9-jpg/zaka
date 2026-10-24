@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { LOCALE_OVERRIDE_KEY, useStore } from './lib/store';
 import { savedLocale, setLocale, type LocaleCode } from './i18n';
 import { Layout } from './components/Layout';
@@ -9,12 +9,12 @@ import { CoinMark } from './components/Logo';
 import { LanguageScreen } from './screens/Language';
 import { AuthScreen } from './screens/Auth';
 import { ConsentScreen } from './screens/Consent';
-import { OnboardingScreen } from './screens/Onboarding';
+const OnboardingScreen = lazy(() => import('./screens/Onboarding').then((m) => ({ default: m.OnboardingScreen })));
 import { HomeScreen } from './screens/Home';
-import { AddScreen } from './screens/Add';
-import { PlanScreen } from './screens/Plan';
-import { SafetyScreen } from './screens/Safety';
-import { MeScreen } from './screens/Me';
+const AddScreen = lazy(() => import('./screens/Add').then((m) => ({ default: m.AddScreen })));
+const PlanScreen = lazy(() => import('./screens/Plan').then((m) => ({ default: m.PlanScreen })));
+const SafetyScreen = lazy(() => import('./screens/Safety').then((m) => ({ default: m.SafetyScreen })));
+const MeScreen = lazy(() => import('./screens/Me').then((m) => ({ default: m.MeScreen })));
 
 function Splash() {
   const { t } = useTranslation('ui');
@@ -44,9 +44,10 @@ export function App() {
   if (!session) return <AuthScreen />;
   if (!dataReady || !data.profile) return <Splash />;
   if (!data.profile.consent_at) return <ConsentScreen />;
-  if (!data.profile.onboarded_at) return <OnboardingScreen />;
+  if (!data.profile.onboarded_at) return <Suspense fallback={<Splash />}><OnboardingScreen /></Suspense>;
 
   return (
+    <Suspense fallback={<Splash />}>
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomeScreen />} />
@@ -57,5 +58,6 @@ export function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
+    </Suspense>
   );
 }

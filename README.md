@@ -28,3 +28,11 @@ Supabase project ref `dalhthsxuyttsgyigwgd`. SQL lives in `supabase/migrations`,
 - `scripts/lerato.csv` — synthetic demo history (verbatim from Notion); `node scripts/gen-seed.mjs` regenerates the seed
 
 All demo data is synthetic.
+
+## Security checks (M6)
+```bash
+npm run test:rls        # 31 live RLS/abuse checks: owner / other user / anonymous (QA accounts *@zaka-qa.test)
+npm run test:injection  # prompt-injection + input validation against the Edge Functions (LLM checks need ANTHROPIC_API_KEY)
+```
+Edge Functions: `supabase/functions/{parse-entry,explain-scam}`; shared parser copied from `src/engine` by `npm run sync:functions`.
+Secrets (set in Supabase, never in this repo): `ANTHROPIC_API_KEY`, optional `ALLOWED_ORIGINS` (comma-separated production origins).

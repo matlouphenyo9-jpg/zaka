@@ -15,9 +15,9 @@ export function LanguageScreen({ onDone }: { onDone: (c: LocaleCode) => void }) 
       <p className="mt-2 text-lg text-ink-soft">{tu('tagline')}</p>
       <h1 className="mt-10 text-[1.6rem] font-bold text-ink">{t('language_title')}</h1>
       <p className="mt-1 text-base text-ink-soft">{t('language_note')}</p>
-      <ul className="mt-6 space-y-2" role="radiogroup" aria-label={t('language_title')}>
+      <div className="mt-6 space-y-2" role="radiogroup" aria-label={t('language_title')}>
         {LOCALES.map((l) => (
-          <li key={l.code}>
+          <div key={l.code}>
             <button
               role="radio"
               aria-checked={sel === l.code}
@@ -36,9 +36,9 @@ export function LanguageScreen({ onDone }: { onDone: (c: LocaleCode) => void }) 
                 {sel === l.code && <Icon name="check" className="text-teal" />}
               </span>
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
       {LOCALES.find((l) => l.code === sel)?.beta && <p className="mt-4 rounded-xl bg-amber-soft px-4 py-3 text-[15px] text-amber-ink">{t('beta')}</p>}
       <div className="mt-auto pt-8">
         <Button block onClick={() => onDone(sel)}>

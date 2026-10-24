@@ -131,7 +131,7 @@ export function CostsEditor({ draft, set }: { draft: CostsDraft; set: (p: Partia
             </>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              <Field label={tu('onb_fare')} inputMode="decimal" placeholder="R" value={draft.fare} onChange={(e) => set({ fare: e.target.value, fareRef: null })} hint={draft.fareRef && ref ? tu('override') : undefined} />
+              <Field label={tu('onb_fare')} inputMode="decimal" placeholder="R" value={draft.fare} onChange={(e) => set({ fare: e.target.value, fareRef: null })} hint={draft.fareRef && ref ? t('as_of', { date: longDate(ref.as_of) }) : undefined} />
               <Field label={t('trips')} inputMode="numeric" value={draft.trips} onChange={(e) => set({ trips: e.target.value.replace(/\D/g, '').slice(0, 1) })} />
             </div>
           )}
@@ -189,7 +189,7 @@ export function costsToEssentials(d: CostsDraft, book: PriceItem[]) {
 export function OnboardingScreen() {
   const { t } = useTranslation();
   const { t: tu } = useTranslation('ui');
-  const { saveProfile, addTxn, saveObligation, priceBook, data } = useStore();
+  const { saveProfile, addTxn, saveObligation, priceBook, data, flushNow } = useStore();
   const [step, setStep] = useState(0);
   const [balance, setBalance] = useState('');
   const [balanceErr, setBalanceErr] = useState<string | null>(null);
@@ -240,6 +240,8 @@ export function OnboardingScreen() {
         ...(skip ? {} : { income_plan: incomePlan, essentials: costsToEssentials(costs, priceBook), transport_mode: costs.mode, city: costs.city }),
         onboarded_at: new Date().toISOString(),
       });
+      // Make sure the new plan reaches the server before the person can close the app (offline: it stays queued).
+      await flushNow();
     } finally {
       setSaving(false);
     }

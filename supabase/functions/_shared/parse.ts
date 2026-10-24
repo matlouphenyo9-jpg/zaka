@@ -35,7 +35,10 @@ const OUT_WORDS = /\b(paid|pay|spent|spend|bought|buy|for the|on the|topped up|t
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export function parseAmount(text: string): number | null {
-  const m = text.replace(/ /g, ' ').match(/r?\s?(\d{1,3}(?:[ ,]\d{3})+|\d+)(?:[.,](\d{1,2}))?(?!\s?%)/i);
+  const t = text.replace(/\u00a0/g, ' ');
+  const num = String.raw`(\d{1,3}(?:[ ,]\d{3})+|\d+)(?:[.,](\d{1,2}))?(?!\d)(?!\s?%)`;
+  // An amount written with "R" wins over any other number in the sentence.
+  const m = t.match(new RegExp(String.raw`\bR\s?` + num, 'i')) ?? t.match(new RegExp(String.raw`(?<![\d-])` + num));
   if (!m) return null;
   const rands = Number(m[1].replace(/[ ,]/g, ''));
   const cents = m[2] ? Number(m[2].padEnd(2, '0')) : 0;

@@ -92,6 +92,8 @@ interface Ctx {
   saveGoal: (g: Omit<Goal, 'id'> & { id?: string }) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
+  /** Push queued writes now (no-op offline). */
+  flushNow: () => Promise<void>;
   resetDemo: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -117,7 +119,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const uid = session?.user.id ?? null;
   const dataRef = useRef(data);
   dataRef.current = data;
-  const flushing = useRef(false);
 
   // ---------------------------------------------------------------- auth
   useEffect(() => {
@@ -164,33 +165,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const flush = useCallback(async () => {
-    if (!uid || flushing.current || !navigator.onLine) return;
-    flushing.current = true;
-    try {
-      let q = await readQueue();
-      while (q.length) {
-        try {
-          await runOp(q[0]);
-        } catch (e) {
-          const err = e as { code?: string; message?: string };
-          // A row the server rejects (validation/RLS) would block the queue forever; drop it, keep network errors.
-          if (err.code && /^(22|23|42)/.test(err.code)) console.warn('Dropped invalid queued write', err.code);
-          else break;
+  const queueLock = useRef<Promise<unknown>>(Promise.resolve());
+  /** Runs queue read-modify-writes one at a time so concurrent saves can't overwrite each other. */
+  const withQueue = useCallback(<T,>(fn: () => Promise<T>): Promise<T> => {
+    const next = queueLock.current.then(fn, fn);
+    queueLock.current = next.catch(() => undefined);
+    return next;
+  }, []);
+  const flushRun = useRef<Promise<void> | null>(null);
+  const flush = useCallback((): Promise<void> => {
+    if (!uid || !navigator.onLine) return Promise.resolve();
+    // Callers can await the in-flight run instead of returning early while writes are still pending.
+    if (flushRun.current) return flushRun.current;
+    let stalled = false;
+    flushRun.current = (async () => {
+      try {
+        let q = await readQueue();
+        while (q.length) {
+          try {
+            await runOp(q[0]);
+          } catch (e) {
+            const err = e as { code?: string; message?: string };
+            // A row the server rejects (validation/RLS) would block the queue forever; drop it, keep network errors.
+            if (err.code && /^(22|23|42)/.test(err.code)) console.warn('Dropped invalid queued write', err.code);
+            else {
+              stalled = true;
+              break;
+            }
+          }
+          const done = q[0].qid;
+          q = await withQueue(async () => {
+            const rest = (await readQueue()).filter((o) => o.qid !== done);
+            await writeQueue(rest);
+            return rest;
+          });
         }
-        q = q.slice(1);
-        await writeQueue(q);
+      } finally {
+        flushRun.current = null;
       }
-    } finally {
-      flushing.current = false;
-    }
-  }, [uid, readQueue, writeQueue]);
+      // A write queued in the gap after our last read is picked up by one more pass.
+      if (!stalled && (await readQueue()).length) await flush();
+    })();
+    return flushRun.current;
+  }, [uid, readQueue, writeQueue, withQueue]);
 
   const enqueue = useCallback(async (op: Omit<QueuedOp, 'qid'>) => {
-    const q = await readQueue();
-    await writeQueue([...q, { ...op, qid: uuid() }]);
+    await withQueue(async () => writeQueue([...(await readQueue()), { ...op, qid: uuid() }]));
     void flush();
-  }, [readQueue, writeQueue, flush]);
+  }, [readQueue, writeQueue, flush, withQueue]);
 
   // ---------------------------------------------------------------- server fetch
   const refresh = useCallback(async () => {
@@ -347,8 +369,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     session, authReady, data, dataReady, online, pending, priceBook, lastSynced,
-    addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut,
-  }), [session, authReady, data, dataReady, online, pending, priceBook, lastSynced, addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut]);
+    addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, flushNow: flush, resetDemo, deleteAccount, signOut,
+  }), [session, authReady, data, dataReady, online, pending, priceBook, lastSynced, addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, flush, resetDemo, deleteAccount, signOut]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

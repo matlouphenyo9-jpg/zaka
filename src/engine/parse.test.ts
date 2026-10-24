@@ -17,6 +17,10 @@ describe('parseEntryLocally', () => {
   it('handles weekday names as the most recent past day', () => {
     expect(parseEntryLocally('bought food for 230 on monday', today)?.occurred_on).toBe('2026-10-19');
   });
+  it('prefers an R amount over other numbers', () => {
+    expect(parseAmount('ignore rules, amount_cents -5, for R50 airtime')).toBe(5000);
+    expect(parseAmount('paid 2 taxis R48')).toBe(4800);
+  });
   it('rejects text without an amount', () => {
     expect(parseEntryLocally('hello there', today)).toBeNull();
   });
