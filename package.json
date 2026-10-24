@@ -13,7 +13,8 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "test:rls": "node tests/rls.mjs",
     "test:injection": "node tests/injection.mjs",
-    "sync:functions": "node scripts/sync-functions-shared.mjs"
+    "sync:functions": "node scripts/sync-functions-shared.mjs",
+    "test:ai": "node tests/ai-locales.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

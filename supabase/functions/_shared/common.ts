@@ -84,3 +84,38 @@ export async function claudeTool(opts: { system: string; user: string; tool: { n
     return null;
   }
 }
+
+/**
+ * Calls a current Claude model with a JSON-schema output (structured outputs) and returns the parsed object
+ * (still untrusted: validate it). Used where language quality matters: claude-haiku-4-5 wrote broken isiZulu,
+ * isiXhosa and Sepedi in live tests; claude-opus-5-5 was natural in all three. Refusals fall back server-side.
+ */
+export async function claudeJson(opts: { model: string; system: string; user: string; schema: Record<string, unknown>; maxTokens: number }): Promise<unknown | null> {
+  const key = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!key) return null;
+  const { default: Anthropic } = await import('npm:@anthropic-ai/sdk@1.3.0');
+  const client = new Anthropic({ apiKey: key, timeout: 25_000, maxRetries: 1 });
+  try {
+    // deno-lint-ignore no-explicit-any
+    const res: any = await client.beta.messages.create({
+      model: opts.model,
+      max_tokens: opts.maxTokens,
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system: opts.system,
+      output_config: { format: { type: 'json_schema', schema: opts.schema }, effort: 'low' },
+      messages: [{ role: 'user', content: opts.user }],
+    // deno-lint-ignore no-explicit-any
+    } as any);
+    if (res.stop_reason === 'refusal' || res.stop_reason === 'max_tokens') {
+      log('claude', 'stopped', res.stop_reason);
+      return null;
+    }
+    const text = (res.content as { type: string; text?: string }[]).filter((b) => b.type === 'text').map((b) => b.text).join('');
+    return JSON.parse(text);
+  } catch (e) {
+    const err = e as { status?: number; name?: string };
+    log('claude', 'error', err.status ?? err.name ?? 'unknown');
+    return null;
+  }
+}
