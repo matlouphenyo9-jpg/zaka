@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-paper text-ink antialiased; font-size: 16px; }
+  ::selection { background: #E3F1EF; }
+  input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+}
+@layer utilities {
+  .tabular { font-variant-numeric: tabular-nums; }
+  .pb-nav { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
