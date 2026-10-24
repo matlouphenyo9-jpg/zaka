@@ -114,7 +114,7 @@
   "tight_body": "Ngale ndlela imali yakho ingase iphele ngaphambi kokuthi kufike imali elandelayo. Faka imali oyilindele noma ushintshe inkokhelo ukuze kubuyekezwe.",
   "see_plan": "Bona izinsuku zami ezingu-14",
   "synthetic_badge": "Idatha ye-demo eyenziwe",
-  "ins_monthly_income": "I-{source} yakho ecishe ibe ngu-{amount} ivame ukufika cishe mhla zingu-{day} — kubonwe kangu-{count}.",
+  "ins_monthly_income": "{source} yakho ecishe ibe ngu-{amount} ivame ukufika cishe mhla zingu-{day} — kubonwe kangu-{count}.",
   "ins_recurring_weekly": "I-{source} ecishe ibe ngu-{amount} ivame ukufika ngo-{weekday} — kubonwe kangu-{count}.",
   "ins_piece_jobs": "Uthola cishe amatogo angu-{perWeek} ngesonto, ngokuvamile cishe u-{amount}.",
   "ins_tight_day": "Imali ivame ukushoda kakhulu cishe mhla zingu-{day} enyangeni.",
