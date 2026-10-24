@@ -1,0 +1,111 @@
+{
+  "_source": "CLDR 47.0 via ICU 77.1 (Node v22.22.0)",
+  "zu": {
+    "weekdays": [
+      "ISonto",
+      "UMsombuluko",
+      "ULwesibili",
+      "ULwesithathu",
+      "ULwesine",
+      "ULwesihlanu",
+      "UMgqibelo"
+    ],
+    "weekdaysShort": [
+      "Son",
+      "Mso",
+      "Bil",
+      "Tha",
+      "Sin",
+      "Hla",
+      "Mgq"
+    ],
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mas",
+      "Eph",
+      "Mey",
+      "Jun",
+      "Jul",
+      "Aga",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dis"
+    ],
+    "short": "{w}, {m} {d}",
+    "long": "{m} {d}, {y}"
+  },
+  "xh": {
+    "weekdays": [
+      "Cawe",
+      "Mvulo",
+      "Lwesibini",
+      "Lwesithathu",
+      "Lwesine",
+      "Lwesihlanu",
+      "Mgqibelo"
+    ],
+    "weekdaysShort": [
+      "Caw",
+      "Mvu",
+      "Bin",
+      "Tha",
+      "Sin",
+      "Hla",
+      "Mgq"
+    ],
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mat",
+      "Epr",
+      "Mey",
+      "Jun",
+      "Jul",
+      "Aga",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Dis"
+    ],
+    "short": "{w}, {m} {d}",
+    "long": "{m} {d}, {y}"
+  },
+  "nso": {
+    "weekdays": [
+      "Lamorena",
+      "Mošupologo",
+      "Labobedi",
+      "Laboraro",
+      "Labone",
+      "Labohlano",
+      "Mokibelo"
+    ],
+    "weekdaysShort": [
+      "Lam",
+      "Mos",
+      "Bed",
+      "Rar",
+      "Ne",
+      "Hla",
+      "Mok"
+    ],
+    "monthsShort": [
+      "Phere",
+      "Dibo",
+      "Hlak",
+      "Mora",
+      "Mei",
+      "June",
+      "Mose",
+      "Agosetose",
+      "Lewe",
+      "Dipha",
+      "Diba",
+      "Manth"
+    ],
+    "short": "{m} {d}, {w}",
+    "long": "{y} {m} {d}"
+  }
+}

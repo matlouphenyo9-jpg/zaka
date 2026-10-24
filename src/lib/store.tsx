@@ -59,7 +59,6 @@ const queueKey = (uid: string) => `zaka:queue:${uid}`;
 const PRICE_KEY = 'zaka:price_book';
 export const DEMO_RESEED_KEY = 'zaka.demo.reseed';
 /** Set when the shared demo account's language is changed on this device only. */
-export const LOCALE_OVERRIDE_KEY = 'zaka.locale.override';
 
 export const uuid = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -312,9 +311,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const changeLocale = useCallback(async (code: LocaleCode) => {
     setLocale(code);
-    // The judge account is shared: keep its language change on this device so the next judge still gets isiXhosa.
-    if (dataRef.current.profile?.is_demo) sessionStorage.setItem(LOCALE_OVERRIDE_KEY, '1');
-    else await saveProfile({ locale: code });
+    // The judge account is shared: its language stays on this device and is never written to the profile.
+    if (!dataRef.current.profile?.is_demo) await saveProfile({ locale: code });
   }, [saveProfile]);
 
   const saveObligation = useCallback(async (o: Omit<Obligation, 'id'> & { id?: string }) => {

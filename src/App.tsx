@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { LOCALE_OVERRIDE_KEY, useStore } from './lib/store';
+import { useStore } from './lib/store';
 import { savedLocale, setLocale, type LocaleCode } from './i18n';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/ui';
@@ -30,14 +30,15 @@ export function App() {
   const { session, authReady, data, dataReady } = useStore();
   const [locale, setLoc] = useState<LocaleCode | null>(savedLocale());
 
-  // The profile's language wins once signed in (e.g. the demo account is isiXhosa).
+  // A real account's saved language wins once signed in (it follows the user across devices). The shared demo
+  // account keeps whatever language was picked on this device.
   useEffect(() => {
     const pl = data.profile?.locale;
-    if (pl && pl !== locale && !sessionStorage.getItem(LOCALE_OVERRIDE_KEY)) {
+    if (pl && pl !== locale && !data.profile?.is_demo) {
       setLocale(pl);
       setLoc(pl);
     }
-  }, [data.profile?.locale, locale]);
+  }, [data.profile?.locale, data.profile?.is_demo, locale]);
 
   if (!locale) return <LanguageScreen onDone={(c) => setLoc(c)} />;
   if (!authReady) return <Splash />;
