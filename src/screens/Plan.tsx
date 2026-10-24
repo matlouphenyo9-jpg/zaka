@@ -110,7 +110,7 @@ function PatternCard({ p, kind }: { p: RecurringPattern | PieceJobPattern; kind:
     kind === 'piece'
       ? tu('ins_piece_jobs', { perWeek: pj.per_week, amount: formatRand(pj.median_cents) })
       : r.kind === 'monthly'
-        ? tu('ins_monthly_income', { source: tu(`src_${r.source}`).toLowerCase(), amount: formatRand(r.amount_cents), day: r.day, count: r.occurrences })
+        ? (([c, ...r]) => c.toLocaleUpperCase() + r.join(''))(tu('ins_monthly_income', { source: tu(`src_${r.source}`).toLowerCase(), amount: formatRand(r.amount_cents), day: r.day, count: r.occurrences }))
         : tu('ins_recurring_weekly', { source: tu(`src_${r.source}`), amount: formatRand(r.amount_cents), weekday: weekdayFromIndex(r.weekday!), count: r.occurrences });
 
   async function use(edited: boolean) {
@@ -281,10 +281,10 @@ export function PlanScreen() {
                 </div>
                 <div className="min-w-0 flex-1 text-sm">
                   {d.events.income.map((e, i) => (
-                    <p key={i} className="truncate font-semibold text-teal-dark">+{formatEstimate(e.amount_cents * e.weight)} {tu(`src_${e.source}`)} <span className="font-normal text-ink-soft">({e.reliability === 'likely' ? '½' : e.reliability === 'confirmed' ? '✓' : '0'})</span></p>
+                    <p key={i} className="break-words font-semibold text-teal-dark">+{formatEstimate(e.amount_cents * e.weight)} {tu(`src_${e.source}`)} <span className="font-normal text-ink-soft">({e.reliability === 'likely' ? '½' : e.reliability === 'confirmed' ? '✓' : '0'})</span></p>
                   ))}
                   {d.events.costs.map((c, i) => (
-                    <p key={i} className="truncate font-semibold">−{formatRand(c.amount_cents)} {c.name}</p>
+                    <p key={i} className="break-words font-semibold">−{formatRand(c.amount_cents)} {c.name}</p>
                   ))}
                   <p className="text-ink-soft">−{formatEstimate(d.essentials_cents)} {tu('plan_essentials').toLowerCase()}</p>
                 </div>

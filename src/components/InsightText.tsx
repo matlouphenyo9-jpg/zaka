@@ -6,7 +6,9 @@ import { shortDate, weekdayFromIndex } from '../lib/format';
 /** Turns an insight code into a sentence using translatable templates. */
 export function useInsightText() {
   const { t } = useTranslation('ui');
-  return (i: Insight): string => {
+  const cap = (x: string) => x.charAt(0).toLocaleUpperCase() + x.slice(1);
+  return (i: Insight): string => cap(text(i));
+  function text(i: Insight): string {
     switch (i.code) {
       case 'monthly_income':
         return t('ins_monthly_income', { source: t(`src_${i.source}`).toLowerCase(), amount: formatRand(i.amount_cents), day: i.day, count: i.count });
@@ -21,7 +23,7 @@ export function useInsightText() {
       case 'shortfall_gap':
         return t('ins_shortfall_gap', { amount: formatRand(Math.ceil(i.amount_cents / 1000) * 1000), date: shortDate(i.date) });
     }
-  };
+  }
 }
 
 export function insightIcon(i: Insight): string {

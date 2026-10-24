@@ -7,6 +7,12 @@ import nso from './nso.json';
 import af from './af.json';
 import uiEn from './ui.en.json';
 
+// Extra UI strings per locale (ui.<code>.json). A locale without a file falls back to English for these keys.
+const uiFiles = import.meta.glob<{ default: Record<string, string> }>('./ui.*.json', { eager: true });
+const uiFor = (code: string): Record<string, string> | undefined => uiFiles[`./ui.${code}.json`]?.default;
+/** True when every extra UI string exists in this locale (so the "still in English" note can be hidden). */
+export const hasFullUi = (code: string): boolean => code === 'en' || !!uiFor(code);
+
 export const LOCALES = [
   { code: 'en', bcp47: 'en-ZA', name: en.language, beta: false },
   { code: 'zu', bcp47: 'zu-ZA', name: zu.language, beta: true },
@@ -48,10 +54,10 @@ export function isBeta(code: string = i18n.language): boolean {
 void i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en, ui: uiEn },
-    zu: { translation: zu },
-    xh: { translation: xh },
-    nso: { translation: nso },
-    af: { translation: af },
+    zu: { translation: zu, ...(uiFor('zu') && { ui: uiFor('zu') }) },
+    xh: { translation: xh, ...(uiFor('xh') && { ui: uiFor('xh') }) },
+    nso: { translation: nso, ...(uiFor('nso') && { ui: uiFor('nso') }) },
+    af: { translation: af, ...(uiFor('af') && { ui: uiFor('af') }) },
   },
   lng: savedLocale() ?? 'en',
   fallbackLng: 'en',

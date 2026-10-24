@@ -89,7 +89,7 @@ export function Layout() {
                 to={tab.to}
                 end={tab.to === '/'}
                 className={({ isActive }) =>
-                  `flex min-h-[64px] flex-col items-center justify-center gap-0.5 text-[13px] font-semibold transition-colors ${isActive ? 'text-teal' : 'text-ink-soft hover:text-ink'}`
+                  `flex min-h-[64px] flex-col items-center justify-center gap-0.5 px-0.5 text-center text-[13px] font-semibold leading-tight transition-colors [overflow-wrap:anywhere] max-[359px]:text-[11px] ${isActive ? 'text-teal' : 'text-ink-soft hover:text-ink'}`
                 }
               >
                 {({ isActive }) => (

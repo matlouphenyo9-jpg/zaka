@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useStore } from '../lib/store';
-import { LOCALES } from '../i18n';
+import { LOCALES, hasFullUi } from '../i18n';
 import { Button, Card, Chip, Field, Row, ScreenTitle, Sheet, Toast } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { CostsEditor, costsToEssentials, type CostsDraft, type Mode } from './Onboarding';
@@ -66,7 +66,7 @@ export function MeScreen() {
             </Chip>
           ))}
         </div>
-        <p className="mt-2 text-sm text-ink-soft">{tu('english_only_note')}</p>
+        {!hasFullUi(i18n.language) && <p className="mt-2 text-sm text-ink-soft">{tu('english_only_note')}</p>}
       </Section>
 
       <Section title={tu('me_profile')} icon="user">

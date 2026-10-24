@@ -91,7 +91,7 @@ export function Chip({ selected, onClick, icon, children, className = '' }: { se
 
 export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; icon?: string; tone?: 'teal' | 'ink' }[]; label: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid grid-flow-col gap-1 rounded-xl bg-ink/5 p-1">
+    <div role="radiogroup" aria-label={label} className="grid gap-1 rounded-xl bg-ink/5 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -99,10 +99,10 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`inline-flex min-h-tap items-center justify-center gap-2 rounded-lg px-3 text-base font-semibold transition ${value === o.value ? 'bg-white text-ink shadow-sm' : 'text-ink-soft'}`}
+          className={`inline-flex min-h-tap min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-center text-[15px] font-semibold leading-tight transition [overflow-wrap:anywhere] ${value === o.value ? 'bg-white text-ink shadow-sm' : 'text-ink-soft'}`}
         >
-          {o.icon && <Icon name={o.icon} size={20} />}
-          {o.label}
+          {o.icon && <Icon name={o.icon} size={20} className="shrink-0 max-[359px]:hidden" />}
+          <span className="min-w-0">{o.label}</span>
         </button>
       ))}
     </div>
