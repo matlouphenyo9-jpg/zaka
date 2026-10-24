@@ -6,6 +6,7 @@ import { Button, Card, Chip, Field, Row, ScreenTitle, Sheet, Toast } from '../co
 import { Icon } from '../components/Icon';
 import { CostsEditor, costsToEssentials, type CostsDraft, type Mode } from './Onboarding';
 import { centsToInput, formatRand, parseRandInput } from '../lib/money';
+import { weekdayFromIndex } from '../lib/format';
 import type { Obligation } from '../engine/types';
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
@@ -134,7 +135,7 @@ export function MeScreen() {
                   icon={x.source === 'grant' ? 'grant' : x.source}
                   tone="in"
                   title={tu(`src_${x.source}`)}
-                  sub={x.rule.kind === 'monthly' ? `${tu('onb_day_of_month')}: ${x.rule.day}` : x.rule.kind === 'frequency' ? `${x.rule.per_week}× / week` : x.rule.kind === 'weekly' ? `weekday ${x.rule.weekday}` : x.rule.date}
+                  sub={x.rule.kind === 'monthly' ? `${tu('onb_day_of_month')}: ${x.rule.day}` : x.rule.kind === 'frequency' ? tu('times_a_week', { n: x.rule.per_week }) : x.rule.kind === 'weekly' ? weekdayFromIndex(x.rule.weekday) : x.rule.date}
                   right={
                     <div className="flex items-center gap-1">
                       <span className="tabular font-semibold text-teal-dark">{formatRand(x.amount_cents)}</span>

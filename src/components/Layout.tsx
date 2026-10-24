@@ -20,7 +20,7 @@ export function SyncPill() {
   if (!online)
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-soft px-2.5 py-1 text-sm font-semibold text-amber-ink">
-        <Icon name="offline" size={16} /> {pending ? t('pending_sync', { count: pending }) : 'Offline'}
+        <Icon name="offline" size={16} /> {pending ? t('pending_sync', { count: pending }) : t('offline_badge')}
       </span>
     );
   if (pending)
@@ -58,7 +58,7 @@ function BetaNotice() {
             setHidden(true);
           }}
         >
-          OK
+          {tu('ok')}
         </button>
       </div>
     </div>

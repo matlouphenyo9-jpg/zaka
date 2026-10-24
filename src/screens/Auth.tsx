@@ -61,7 +61,7 @@ export function AuthScreen() {
       </button>
 
       <div className="my-6 flex items-center gap-3 text-sm text-ink-faint">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+        <span className="h-px flex-1 bg-line" /> {t('auth_or')} <span className="h-px flex-1 bg-line" />
       </div>
 
       <h1 className="text-xl font-bold text-ink">{mode === 'signin' ? t('auth_title') : t('auth_signup_title')}</h1>

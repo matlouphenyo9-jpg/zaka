@@ -309,7 +309,7 @@ export function OnboardingScreen() {
                         <Field label={tu('onb_per_week')} inputMode="decimal" value={d.perWeek} onChange={(e) => setD({ perWeek: e.target.value })} />
                       )}
                       <Field label={tu('onb_usual_amount')} inputMode="decimal" value={d.amount} onChange={(e) => setD({ amount: e.target.value })} />
-                      {s.key === 'grant' && csg && <p className="col-span-2 text-sm text-ink-soft">Child Support Grant: {formatRand(csg)} per child (DSD/SASSA 2026–27).</p>}
+                      {s.key === 'grant' && csg && <p className="col-span-2 text-sm text-ink-soft">{tu('onb_csg_note', { amount: formatRand(csg) })}</p>}
                     </div>
                   )}
                 </div>
