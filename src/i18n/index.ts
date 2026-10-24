@@ -11,7 +11,11 @@ import uiEn from './ui.en.json';
 const uiFiles = import.meta.glob<{ default: Record<string, string> }>('./ui.*.json', { eager: true });
 const uiFor = (code: string): Record<string, string> | undefined => uiFiles[`./ui.${code}.json`]?.default;
 /** True when every extra UI string exists in this locale (so the "still in English" note can be hidden). */
-export const hasFullUi = (code: string): boolean => code === 'en' || !!uiFor(code);
+export const hasFullUi = (code: string): boolean => {
+  if (code === 'en') return true;
+  const ui = uiFor(code);
+  return !!ui && Object.keys(uiEn).every((k) => k.startsWith('_') || k in ui);
+};
 
 export const LOCALES = [
   { code: 'en', bcp47: 'en-ZA', name: en.language, beta: false },

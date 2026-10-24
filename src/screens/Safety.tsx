@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { Badge, Button, Card, Chip, Field, ScreenTitle, Segmented } from '../components/ui';
+import { Button, Card, Chip, Field, ScreenTitle, Segmented } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { checkMessage, type ScamFlag, type ScamResult } from '../engine/scam';
-import { loanCost, type CreditType, type LoanResult } from '../engine/loan';
+import { loanCost, type CreditType, type LoanResult, type Verdict } from '../engine/loan';
+import { CREDIT_TYPES, LEGAL_CHECKED, REPO, rateCap } from '../engine/legal';
+import { BANK_LINES, HELP_CHECKED, HELP_LINES, telHref } from '../data/help';
+import { longDate } from '../lib/format';
 import { explainScam } from '../lib/ai';
 import { supabase } from '../lib/supabase';
 import { formatRand, parseRandInput } from '../lib/money';
@@ -104,15 +107,7 @@ function ScamShield() {
             <p className="mt-3 text-sm text-ink-soft">{t(result.level === 'low' ? 'uncertain' : 'no_guarantee')}</p>
           </Card>
 
-          <Card>
-            <p className="mb-2 font-semibold">{tu('scam_report')}</p>
-            <ul className="space-y-2 text-[15px] text-ink">
-              <li className="flex gap-2"><Icon name="grant" size={20} className="shrink-0 text-ink-soft" />{tu('scam_report_bank')}</li>
-              <li className="flex gap-2"><Icon name="shield" size={20} className="shrink-0 text-ink-soft" />{tu('scam_report_saps')}</li>
-              <li className="flex gap-2"><Icon name="debt" size={20} className="shrink-0 text-ink-soft" /><a className="underline underline-offset-2" href="tel:0860627627">{tu('scam_report_ncr')}</a></li>
-              <li className="flex gap-2"><Icon name="info" size={20} className="shrink-0 text-ink-soft" />{tu('scam_report_sassa')}</li>
-            </ul>
-          </Card>
+          <ReportCard flags={result.flags} />
           <p className="text-sm text-ink-soft">{tu('scam_not_stored')}</p>
           <Button variant="secondary" block onClick={() => { setResult(null); setText(''); setAi({ state: 'idle' }); }}>{tu('scam_clear')}</Button>
         </>
@@ -121,74 +116,139 @@ function ScamShield() {
   );
 }
 
+/** Verified help numbers (R8 Part C). Shows the lines that fit the warning signs first. */
+function ReportCard({ flags }: { flags: ScamFlag[] }) {
+  const { t: tu } = useTranslation('ui');
+  const [banksOpen, setBanksOpen] = useState(false);
+  const lines = [HELP_LINES.saps, ...(flags.includes('impersonation') ? [HELP_LINES.sassa] : []), ...(flags.includes('upfront_fee') || flags.includes('too_good') ? [HELP_LINES.ncr] : []), HELP_LINES.obs];
+  if (!lines.includes(HELP_LINES.sassa)) lines.splice(lines.length - 1, 0, HELP_LINES.sassa);
+  if (!lines.includes(HELP_LINES.ncr)) lines.splice(lines.length - 1, 0, HELP_LINES.ncr);
+  return (
+    <Card>
+      <p className="mb-1 font-semibold">{tu('scam_report')}</p>
+      <p className="mb-3 text-sm text-ink-soft">{tu('help_own_number')}</p>
+      <ul className="divide-y divide-line">
+        {lines.map((l) => (
+          <li key={l.id} className="flex items-center gap-3 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-ink">{l.name}</p>
+              <p className="text-sm text-ink-soft">{tu(l.use)}</p>
+            </div>
+            <a href={telHref(l.number)} className="tabular inline-flex min-h-tap shrink-0 items-center rounded-xl bg-teal-soft px-3 font-semibold text-teal-dark">{l.number}</a>
+          </li>
+        ))}
+      </ul>
+      <button type="button" aria-expanded={banksOpen} onClick={() => setBanksOpen(!banksOpen)} className="mt-2 flex min-h-tap w-full items-center justify-between rounded-xl px-1 text-left font-semibold text-teal">
+        {tu('help_bank_lines')} <Icon name={banksOpen ? 'close' : 'forward'} size={18} />
+      </button>
+      {banksOpen && (
+        <ul className="divide-y divide-line">
+          {BANK_LINES.map((b) => (
+            <li key={b.id} className="flex items-center justify-between gap-3 py-2">
+              <span className="font-semibold">{b.name}</span>
+              <a href={telHref(b.number)} className="tabular inline-flex min-h-tap items-center px-2 font-semibold text-teal-dark underline underline-offset-2">{b.number}</a>
+            </li>
+          ))}
+          <li className="py-2 text-sm text-ink-soft">{tu('help_other_banks')}</li>
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-ink-faint">{tu('help_checked', { date: longDate(HELP_CHECKED) })}</p>
+    </Card>
+  );
+}
+
+type Mode = 'pct_month' | 'pct_year' | 'rand';
+
+function VerdictLine({ verdict, above, within, unknown }: { verdict: Verdict; above: string; within: string; unknown?: string }) {
+  if (verdict === 'above') return <p className="flex items-start gap-2 rounded-xl bg-risk px-3 py-2.5 font-bold text-white" data-testid="above-limit"><Icon name="warning" size={20} className="mt-0.5 shrink-0" />{above}</p>;
+  if (verdict === 'within') return <p className="flex items-start gap-2 rounded-xl bg-teal-soft px-3 py-2.5 font-semibold text-teal-dark"><Icon name="check" size={20} className="mt-0.5 shrink-0" />{within}</p>;
+  return unknown ? <p className="flex items-start gap-2 rounded-xl bg-ink/5 px-3 py-2.5 text-ink"><Icon name="info" size={20} className="mt-0.5 shrink-0" />{unknown}</p> : null;
+}
+
 function LoanCheck() {
   const { t } = useTranslation();
   const { t: tu } = useTranslation('ui');
   const [type, setType] = useState<CreditType>('short_first');
-  const [mode, setMode] = useState<'pct_month' | 'rand'>('pct_month');
+  const [mode, setMode] = useState<Mode>('pct_month');
   const [principal, setPrincipal] = useState('');
   const [rate, setRate] = useState('');
   const [interest, setInterest] = useState('');
+  const [initFee, setInitFee] = useState('');
+  const [serviceFee, setServiceFee] = useState('');
   const [fees, setFees] = useState('');
   const [term, setTerm] = useState('1');
   const [res, setRes] = useState<LoanResult | null>(null);
   const [missing, setMissing] = useState(false);
+  const cap = rateCap(type);
+  const opt = (s: string) => (s.trim() ? parseRandInput(s) : 0);
 
   function calc() {
     const p = parseRandInput(principal);
-    const f = fees.trim() ? parseRandInput(fees) : 0;
+    const [fi, fs, fo] = [opt(initFee), opt(serviceFee), opt(fees)];
     const n = Number(term);
     const r = Number(rate.replace(',', '.'));
     const i = parseRandInput(interest);
-    const ok = p && f != null && n > 0 && n <= 120 && (mode === 'pct_month' ? rate.trim() !== '' && r >= 0 && r <= 100 : i != null);
-    if (!ok) {
+    const rateOk = mode === 'rand' ? i != null : rate.trim() !== '' && r >= 0 && r <= (mode === 'pct_month' ? 100 : 1200);
+    if (!p || fi == null || fs == null || fo == null || !(n > 0 && n <= 360) || !rateOk) {
       setMissing(true);
       setRes(null);
       return;
     }
     setMissing(false);
-    setRes(loanCost({ principal_cents: p!, interest: mode === 'pct_month' ? { mode, rate: r } : { mode, cents: i! }, fees_cents: f!, term_months: n, type }));
+    setRes(loanCost({
+      principal_cents: p,
+      interest: mode === 'rand' ? { mode, cents: i! } : { mode, rate: r },
+      initiation_cents: fi, service_monthly_cents: fs, other_fees_cents: fo,
+      term_months: n, type,
+    }));
   }
+
+  const capText = cap.per === 'month' ? tu('loan_cap_month', { rate: cap.max }) : tu('loan_cap_year', { rate: cap.max, repo: REPO.rate });
+  const anyAbove = res && [res.rate.verdict, res.initiation.verdict, res.service.verdict].includes('above');
 
   return (
     <div className="space-y-4">
       <p className="text-ink-soft">{tu('loan_intro')}</p>
       <div>
         <label htmlFor="loan-type" className="mb-1.5 block text-base font-semibold">{tu('loan_type')}</label>
-        <select id="loan-type" value={type} onChange={(e) => setType(e.target.value as CreditType)} className="min-h-tap w-full rounded-xl border border-line bg-white px-4 py-3 text-base">
-          <option value="short_first">{tu('loan_type_short_first')}</option>
-          <option value="short_repeat">{tu('loan_type_short_repeat')}</option>
-          <option value="other">{tu('loan_type_other')}</option>
+        <select id="loan-type" value={type} onChange={(e) => { setType(e.target.value as CreditType); setRes(null); }} className="min-h-tap w-full rounded-xl border border-line bg-white px-4 py-3 text-base">
+          {CREDIT_TYPES.map((c) => <option key={c} value={c}>{tu(`loan_type_${c}`)}</option>)}
         </select>
+        <p className="mt-1.5 text-sm text-ink-soft">{capText}</p>
       </div>
       <Field label={t('borrowed')} inputMode="decimal" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
-      <Segmented label={tu('loan_interest_mode')} value={mode} onChange={setMode} options={[{ value: 'pct_month', label: tu('loan_interest_pct_month') }, { value: 'rand', label: tu('loan_interest_rand') }]} />
+      <Segmented label={tu('loan_interest_mode')} value={mode} onChange={setMode} options={[{ value: 'pct_month', label: tu('loan_interest_pct_month') }, { value: 'pct_year', label: tu('loan_interest_pct_year') }, { value: 'rand', label: tu('loan_interest_rand') }]} />
       <div className="grid grid-cols-2 gap-3">
-        {mode === 'pct_month' ? (
-          <Field label={tu('loan_rate')} inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} suffix={<span className="text-ink-soft">%</span>} />
-        ) : (
+        {mode === 'rand' ? (
           <Field label={t('interest')} inputMode="decimal" value={interest} onChange={(e) => setInterest(e.target.value)} />
+        ) : (
+          <Field label={mode === 'pct_month' ? tu('loan_rate') : tu('loan_rate_year')} inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} suffix={<span className="text-ink-soft">%</span>} />
         )}
         <Field label={tu('loan_term')} inputMode="numeric" value={term} onChange={(e) => setTerm(e.target.value.replace(/\D/g, '').slice(0, 3))} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={tu('loan_init_fee')} inputMode="decimal" value={initFee} onChange={(e) => setInitFee(e.target.value)} />
+        <Field label={tu('loan_service_fee')} inputMode="decimal" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
       </div>
       <Field label={t('fees')} inputMode="decimal" value={fees} onChange={(e) => setFees(e.target.value)} />
       {missing && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 text-amber-ink">{t('missing_terms')}</p>}
       <Button block icon="calc" onClick={calc}>{t('show_total')}</Button>
 
       {res && (
-        <Card tone={res.above_limit ? 'risk' : 'plain'}>
+        <Card tone={anyAbove ? 'risk' : 'plain'}>
           <p className="text-sm font-semibold text-ink-soft">{tu('loan_result_total')}</p>
           <p className="tabular text-[2.5rem] font-bold leading-tight" data-testid="loan-total">{formatRand(res.total_cents)}</p>
           <p className="text-lg">
             {tu('loan_result_cost')} <strong className="tabular">{formatRand(res.cost_cents)}</strong> · {tu('loan_result_extra', { pct: res.cost_pct })}
           </p>
           {Number(term) > 1 && <p className="text-ink-soft">{tu('loan_per_month', { amount: formatRand(res.monthly_cents) })}</p>}
-          <div className="mt-4">
-            {res.above_limit === true && <p className="flex items-start gap-2 rounded-xl bg-risk px-3 py-2.5 font-bold text-white" data-testid="above-limit"><Icon name="warning" size={20} className="mt-0.5 shrink-0" />{t('above_limit')}</p>}
-            {res.above_limit === false && <Badge tone="teal" icon="check">{tu('loan_within_limit')}</Badge>}
-            {res.above_limit === null && <p className="text-[15px] text-ink">{tu('loan_no_limit')}</p>}
+          {res.interest_estimated && Number(term) > 1 && <p className="mt-1 text-sm text-ink-soft">{tu('loan_simple_interest_note')}</p>}
+          <div className="mt-4 space-y-2">
+            <VerdictLine verdict={res.rate.verdict} above={t('above_limit')} within={tu('loan_within_limit')} unknown={tu('loan_rate_needed')} />
+            {(opt(initFee) ?? 0) > 0 && <VerdictLine verdict={res.initiation.verdict} above={tu('loan_init_above', { max: formatRand(res.initiation.cap_cents) })} within={tu('loan_init_within', { max: formatRand(res.initiation.cap_cents) })} />}
+            {(opt(serviceFee) ?? 0) > 0 && <VerdictLine verdict={res.service.verdict} above={tu('loan_service_above', { max: formatRand(res.service.cap_cents) })} within={tu('loan_service_within', { max: formatRand(res.service.cap_cents) })} />}
           </div>
-          {res.max_rate != null && <p className="mt-2 text-sm text-ink-soft">{tu('loan_limit_value', { rate: res.max_rate })} {tu('loan_fees_note')}</p>}
+          <p className="mt-3 text-xs text-ink-faint">{tu('loan_legal_source', { date: longDate(LEGAL_CHECKED) })}</p>
         </Card>
       )}
 
@@ -199,10 +259,10 @@ function LoanCheck() {
             <Icon name="link" size={20} className="shrink-0 text-teal" />
             <a href="https://ncr.org.za/register/registered_cp.php" target="_blank" rel="noopener noreferrer" className="font-semibold text-teal underline underline-offset-2">{tu('loan_ncr_check')}</a>
           </li>
-          <li className="flex gap-2"><Icon name="debt" size={20} className="shrink-0 text-teal" /><a className="underline underline-offset-2" href="tel:0860627627">{tu('scam_report_ncr')}</a></li>
+          <li className="flex gap-2"><Icon name="debt" size={20} className="shrink-0 text-teal" /><a className="underline underline-offset-2" href={telHref(HELP_LINES.ncr.number)}>{tu('scam_report_ncr')}</a></li>
         </ul>
       </Card>
-      <p className="text-sm text-ink-soft">{t('loan_disclaimer')}</p>
+      <p className="text-sm text-ink-soft">{t('loan_disclaimer')} {tu('loan_not_legal_advice')}</p>
     </div>
   );
 }
