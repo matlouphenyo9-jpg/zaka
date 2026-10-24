@@ -17,7 +17,8 @@ declare
   v_role text := coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '');
 begin
   if p_user is null then raise exception 'user required'; end if;
-  if v_role <> 'service_role' and (auth.uid() is null or auth.uid() <> p_user) then
+  -- API callers may only seed themselves; '' = a direct database session (SQL editor / migrations), which is trusted.
+  if v_role not in ('service_role', '') and (auth.uid() is null or auth.uid() <> p_user) then
     raise exception 'not allowed' using errcode = '42501';
   end if;
 
