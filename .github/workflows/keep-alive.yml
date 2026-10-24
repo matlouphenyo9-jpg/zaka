@@ -1,0 +1,26 @@
+# Keeps the free Supabase project from pausing (it pauses after 7 days without activity).
+# Does one tiny public read of the price book with the publishable key; no secrets needed.
+name: keep-alive
+on:
+  schedule:
+    - cron: '17 6 * * *' # daily, 08:17 South African time
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read one price_book row
+        env:
+          SUPABASE_URL: https://dalhthsxuyttsgyigwgd.supabase.co
+          SUPABASE_KEY: sb_publishable_3gDDWCLElWvPr_9TYTD81A_DKSKG4Mr
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            code=$(curl -sS -o body.json -w '%{http_code}' "$SUPABASE_URL/rest/v1/price_book?select=id&limit=1" -H "apikey: $SUPABASE_KEY")
+            if [ "$code" = "200" ] && grep -q '"id"' body.json; then echo "Supabase awake (HTTP $code)"; exit 0; fi
+            echo "Attempt $attempt: HTTP $code"; sleep 20
+          done
+          echo "::error::Supabase did not answer. The project may be paused: restore it in the dashboard."
+          exit 1
