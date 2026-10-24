@@ -3,6 +3,7 @@
 // The API key is read from the ANTHROPIC_API_KEY environment variable and never written anywhere.
 //
 //   ANTHROPIC_API_KEY=... node scripts/translate.mjs --locales zu,nso,af,xh [--max-usd 5] [--effort low] [--dry-run]
+//   node scripts/translate.mjs --via-function ...   (temporary translate-draft Edge Function, QA owner only)
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const MODEL = 'claude-opus-5-5';
@@ -102,19 +103,10 @@ async function callBatch(client, locale, keys, done) {
   };
   const already = Object.keys(done).length ? `\nAlready translated in this run (stay consistent with these):\n${pairs(uiEn, done, Object.keys(done))}\n` : '';
   const source = JSON.stringify(Object.fromEntries(keys.map((k) => [k, uiEn[k]])), null, 1);
-  const res = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    system: systemFor(locale),
-    output_config: { format: { type: 'json_schema', schema }, effort },
-    messages: [{ role: 'user', content: `${already}\nTranslate these English strings into ${NAMES[locale]}:\n${source}` }],
-  });
+  const res = await client({ system: systemFor(locale), user: `${already}\nTranslate these English strings into ${NAMES[locale]}:\n${source}`, schema, effort });
   spent += cost(res.usage ?? {});
   if (res.stop_reason !== 'end_turn') throw new Error(`stop_reason ${res.stop_reason}`);
-  const text = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  return JSON.parse(text);
+  return JSON.parse(res.text);
 }
 
 async function translate(client, locale) {
@@ -164,18 +156,55 @@ function finish(locale, existing, done, failed) {
   return { locale, added: Object.keys(done).length, failed, review, strings: done };
 }
 
+// Direct: the caller's own ANTHROPIC_API_KEY. Via function: a temporary Edge Function that holds the key
+// server-side and only accepts the QA owner account (QA_PASSWORD env var).
+async function direct() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('Set ANTHROPIC_API_KEY in your shell (never in a committed file), or use --via-function.');
+    process.exit(1);
+  }
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const sdk = new Anthropic({ timeout: 180_000, maxRetries: 2 });
+  return async ({ system, user, schema, effort }) => {
+    const res = await sdk.messages.create({
+      model: MODEL,
+      max_tokens: 12000,
+      system,
+      output_config: { format: { type: 'json_schema', schema }, effort },
+      messages: [{ role: 'user', content: user }],
+    });
+    return { text: res.content.filter((b) => b.type === 'text').map((b) => b.text).join(''), stop_reason: res.stop_reason, usage: res.usage };
+  };
+}
+
+async function viaFunction() {
+  const { createClient } = await import('@supabase/supabase-js');
+  const URL = 'https://dalhthsxuyttsgyigwgd.supabase.co';
+  const sb = createClient(URL, 'sb_publishable_3gDDWCLElWvPr_9TYTD81A_DKSKG4Mr', { auth: { persistSession: false } });
+  const { data, error } = await sb.auth.signInWithPassword({ email: 'qa-owner@zaka-qa.test', password: process.env.QA_PASSWORD ?? 'QaTest!2026x' });
+  if (error) throw new Error('QA sign-in failed');
+  return async (body) => {
+    for (let attempt = 1; ; attempt++) {
+      const r = await fetch(`${URL}/functions/v1/translate-draft`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) return j;
+      if (r.status === 402) throw new Error('cost cap reached (server budget exhausted)');
+      if (attempt >= 2 || r.status < 500) throw new Error(`function ${r.status} ${j.error ?? ''}`);
+    }
+  };
+}
+
 const todoCounts = Object.fromEntries(locales.map((l) => [l, sourceKeys.filter((k) => !(k in (existsSync(path(`ui.${l}.json`)) ? load(`ui.${l}.json`) : {}))).length]));
 console.log('keys to translate:', todoCounts);
 if (dryRun) {
   for (const l of locales) console.log(`${l}: ~${Math.round(JSON.stringify(systemFor(l)).length / 3.5)} system tokens, ${Math.ceil(todoCounts[l] / BATCH)} batch(es)`);
   process.exit(0);
 }
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('Set ANTHROPIC_API_KEY in your shell (never in a committed file).');
-  process.exit(1);
-}
-const { default: Anthropic } = await import('@anthropic-ai/sdk');
-const client = new Anthropic({ timeout: 180_000, maxRetries: 2 });
+const client = args['via-function'] ? await viaFunction() : await direct();
 const results = await Promise.all(locales.map((l) => translate(client, l)));
 writeFileSync(reportPath, JSON.stringify({ model: MODEL, usd: Number(spent.toFixed(3)), results }, null, 2) + '\n');
 for (const r of results) console.log(`${r.locale}: +${r.added}, failed ${Object.keys(r.failed).length}, flagged for review ${Object.keys(r.review).length}`);
