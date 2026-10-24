@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
 import { useStore } from '../lib/store';
-import { isBeta, setLocale } from '../i18n';
+import { isBeta } from '../i18n';
 
 const TABS = [
   { to: '/', icon: 'home', key: 'nav_home' },
@@ -35,7 +35,7 @@ export function SyncPill() {
 function BetaNotice() {
   const { t, i18n } = useTranslation();
   const { t: tu } = useTranslation('ui');
-  const { saveProfile } = useStore();
+  const { changeLocale } = useStore();
   const [hidden, setHidden] = useState(() => sessionStorage.getItem('zaka.beta.hidden') === i18n.language);
   if (!isBeta(i18n.language) || hidden) return null;
   return (
@@ -47,10 +47,7 @@ function BetaNotice() {
       <div className="mt-2 flex gap-2">
         <button
           className="min-h-tap rounded-lg px-3 font-semibold underline underline-offset-2"
-          onClick={() => {
-            setLocale('en');
-            void saveProfile({ locale: 'en' });
-          }}
+          onClick={() => void changeLocale('en')}
         >
           English
         </button>

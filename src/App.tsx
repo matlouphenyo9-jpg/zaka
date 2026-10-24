@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import { useStore } from './lib/store';
+import { LOCALE_OVERRIDE_KEY, useStore } from './lib/store';
 import { savedLocale, setLocale, type LocaleCode } from './i18n';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/ui';
@@ -33,7 +33,7 @@ export function App() {
   // The profile's language wins once signed in (e.g. the demo account is isiXhosa).
   useEffect(() => {
     const pl = data.profile?.locale;
-    if (pl && pl !== locale && !sessionStorage.getItem('zaka.locale.override')) {
+    if (pl && pl !== locale && !sessionStorage.getItem(LOCALE_OVERRIDE_KEY)) {
       setLocale(pl);
       setLoc(pl);
     }

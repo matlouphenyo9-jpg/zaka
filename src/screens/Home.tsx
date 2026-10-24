@@ -32,7 +32,7 @@ export function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
 export function HomeScreen() {
   const { t } = useTranslation();
   const { t: tu } = useTranslation('ui');
-  const { data } = useStore();
+  const { data, online } = useStore();
   const { forecast: f, insights } = useForecast();
   const insightText = useInsightText();
   const navigate = useNavigate();
@@ -60,6 +60,11 @@ export function HomeScreen() {
 
   return (
     <div className="space-y-4">
+      {!online && (
+        <p className="flex items-center gap-2 rounded-xl bg-amber-soft px-4 py-3 text-[15px] text-amber-ink">
+          <Icon name="offline" size={20} /> {t('last_saved')}
+        </p>
+      )}
       {name && <p className="text-lg font-semibold text-ink-soft">{name}</p>}
 
       {/* The one big number */}

@@ -241,5 +241,6 @@
   "weekday_4": "Thursday",
   "weekday_5": "Friday",
   "weekday_6": "Saturday",
-  "scam_example": "Try example {n}"
+  "scam_example": "Try example {n}",
+  "logout_pending": "{count} entries are still waiting to sync and will be lost if you log out now. Log out anyway?"
 }

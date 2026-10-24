@@ -5,7 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { del, get, set } from 'idb-keyval';
 import { supabase } from './supabase';
 import type { Essentials, Goal, IncomePlanItem, Obligation, Txn } from '../engine/types';
-import type { LocaleCode } from '../i18n';
+import { setLocale, type LocaleCode } from '../i18n';
 
 export interface Profile {
   user_id: string;
@@ -57,6 +57,9 @@ const EMPTY: AppData = { profile: null, txns: [], obligations: [], goals: [] };
 const cacheKey = (uid: string) => `zaka:data:${uid}`;
 const queueKey = (uid: string) => `zaka:queue:${uid}`;
 const PRICE_KEY = 'zaka:price_book';
+export const DEMO_RESEED_KEY = 'zaka.demo.reseed';
+/** Set when the shared demo account's language is changed on this device only. */
+export const LOCALE_OVERRIDE_KEY = 'zaka.locale.override';
 
 export const uuid = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -83,6 +86,7 @@ interface Ctx {
   addTxn: (t: Omit<Txn, 'id'> & { id?: string }) => Promise<{ queued: boolean; txn: Txn }>;
   deleteTxn: (id: string) => Promise<void>;
   saveProfile: (patch: Partial<Profile>) => Promise<void>;
+  changeLocale: (code: LocaleCode) => Promise<void>;
   saveObligation: (o: Omit<Obligation, 'id'> & { id?: string }) => Promise<void>;
   deleteObligation: (id: string) => Promise<void>;
   saveGoal: (g: Omit<Goal, 'id'> & { id?: string }) => Promise<void>;
@@ -226,6 +230,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       setPending((await readQueue()).filter((o) => o.table === 'transactions').length);
       try {
+        // "Try the demo" always starts from Lerato's fresh history ending today, whatever the judging date.
+        if (sessionStorage.getItem(DEMO_RESEED_KEY) === '1') {
+          sessionStorage.removeItem(DEMO_RESEED_KEY);
+          await Promise.all([del(cacheKey(uid)), del(queueKey(uid))]).catch(() => undefined);
+          const { error } = await supabase.rpc('seed_demo', { p_user: uid });
+          if (error) console.warn('Demo reset failed', error.code);
+        }
         await refresh();
       } catch (e) {
         console.warn('Offline or fetch failed; using cached data', (e as Error).message);
@@ -276,6 +287,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     void _ignored;
     await enqueue({ table: 'profiles', kind: 'upsert', row });
   }, [uid, writeLocal, enqueue]);
+
+  const changeLocale = useCallback(async (code: LocaleCode) => {
+    setLocale(code);
+    // The judge account is shared: keep its language change on this device so the next judge still gets isiXhosa.
+    if (dataRef.current.profile?.is_demo) sessionStorage.setItem(LOCALE_OVERRIDE_KEY, '1');
+    else await saveProfile({ locale: code });
+  }, [saveProfile]);
 
   const saveObligation = useCallback(async (o: Omit<Obligation, 'id'> & { id?: string }) => {
     const row = { ...o, id: o.id ?? uuid() } as Obligation;
@@ -329,8 +347,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     session, authReady, data, dataReady, online, pending, priceBook, lastSynced,
-    addTxn, deleteTxn, saveProfile, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut,
-  }), [session, authReady, data, dataReady, online, pending, priceBook, lastSynced, addTxn, deleteTxn, saveProfile, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut]);
+    addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut,
+  }), [session, authReady, data, dataReady, online, pending, priceBook, lastSynced, addTxn, deleteTxn, saveProfile, changeLocale, saveObligation, deleteObligation, saveGoal, deleteGoal, refresh, resetDemo, deleteAccount, signOut]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

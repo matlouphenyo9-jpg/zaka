@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useState, type FormEvent } from 'react';
 import { DEMO_EMAIL, DEMO_PASSWORD, supabase } from '../lib/supabase';
+import { DEMO_RESEED_KEY, LOCALE_OVERRIDE_KEY } from '../lib/store';
 import { Button, Field } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { Icon } from '../components/Icon';
@@ -36,6 +37,8 @@ export function AuthScreen() {
     if (!navigator.onLine) return setMsg({ tone: 'error', text: t('auth_offline') });
     setBusy(true);
     setMsg(null);
+    sessionStorage.setItem(DEMO_RESEED_KEY, '1');
+    sessionStorage.removeItem(LOCALE_OVERRIDE_KEY);
     const { error } = await supabase.auth.signInWithPassword({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
     if (error) setMsg({ tone: 'error', text: t('auth_error') });
     setBusy(false);
