@@ -151,6 +151,12 @@ function recurringEvents(p: RecurringPattern, today: ISODate, horizon: number): 
   return out;
 }
 
+function isFrequencyEvent(e: IncomeEvent, profile: PlanProfile): boolean {
+  if (e.origin === 'pattern') return e.pattern_key === 'piece_job';
+  if (e.origin === 'plan') return profile.income_plan.find((p) => p.key === e.pattern_key)?.rule.kind === 'frequency';
+  return false;
+}
+
 export function resolveEssentials(profile: PlanProfile, patterns: Patterns): EssentialInput[] {
   const e = profile.essentials ?? {};
   const workdays = e.workdays?.length ? e.workdays : DEFAULT_WORKDAYS;
@@ -257,9 +263,14 @@ export function buildForecast(input: ForecastInput): Forecast {
   }
 
   // ---- horizon: the next confirmed or likely money, capped at 14 days
-  const next = income.find((e) => e.weight >= WEIGHT.likely) ?? null;
+  // A dated income (grant, salary, a date you entered) ends the horizon. Piece jobs are spread by frequency, so their
+  // dates are only estimates: they count (at half) inside the horizon and end it only when no dated money is due.
+  const counted = income.filter((e) => e.weight >= WEIGHT.likely);
+  const next = counted.find((e) => !isFrequencyEvent(e, profile)) ?? counted[0] ?? null;
   const H = next ? diffDays(next.date, today) : horizonCap;
-  const min_balance_cents = Math.min(balance, ...days.slice(0, H).map((d) => d.balance_cents));
+  // Money must last until the horizon income arrives, so that day's own income is not counted in the minimum.
+  const lows = days.slice(0, H).map((d, i) => (i === H - 1 && next ? d.balance_cents - Math.round(d.events.income.reduce((s, e) => s + e.amount_cents * e.weight, 0)) : d.balance_cents));
+  const min_balance_cents = Math.min(balance, ...lows);
 
   // ---- set-asides: savings goal pace + bills that fall after the horizon but inside 14 days
   const set_asides: SetAside[] = [];

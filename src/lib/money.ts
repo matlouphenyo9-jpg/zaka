@@ -22,3 +22,8 @@ export function parseRandInput(input: string): number | null {
 export function centsToInput(cents: number): string {
   return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
 }
+
+/** Forecast numbers are estimates: show whole rands, rounded towards caution (down for money you have). */
+export function formatEstimate(cents: number): string {
+  return formatRand(cents >= 0 ? Math.floor(cents / 100) * 100 : -Math.ceil(-cents / 100) * 100);
+}

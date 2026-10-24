@@ -7,7 +7,7 @@ import { Button, Card, Chip, Field, Row, ScreenTitle, Segmented, Toast } from '.
 import { Icon } from '../components/Icon';
 import { CATEGORY_ICON, IN_CATEGORIES, OUT_CATEGORIES, sourceFor } from '../engine/categories';
 import type { Category, Direction } from '../engine/types';
-import { formatRand } from '../lib/money';
+import { formatEstimate, formatRand } from '../lib/money';
 import { addDays, isValidISODate, todaySA } from '../lib/dates';
 import { shortDate } from '../lib/format';
 import { parseEntry } from '../lib/ai';
@@ -102,6 +102,7 @@ export function AddScreen() {
     setVia('manual');
     setParseMsg(null);
     setDate(today);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const cats = direction === 'in' ? IN_CATEGORIES : OUT_CATEGORIES;
@@ -122,7 +123,7 @@ export function AddScreen() {
               {impact.from && impact.to && impact.from !== impact.to && <p className="font-semibold text-ink">{tu('shortfall_moved', { from: shortDate(impact.from), to: shortDate(impact.to) })}</p>}
               {impact.from && !impact.to && <p className="font-semibold text-ink">{tu('shortfall_cleared')}</p>}
               <p className="mt-0.5 text-ink-soft">
-                {tu('plan_result')}: <span className="tabular line-through decoration-ink-faint">{formatRand(impact.safeFrom)}</span> → <strong className="tabular text-teal-dark">{formatRand(impact.safeTo)}</strong>
+                {tu('plan_result')}: <span className="tabular line-through decoration-ink-faint">{formatEstimate(impact.safeFrom)}</span> → <strong className="tabular text-teal-dark">{formatEstimate(impact.safeTo)}</strong>
               </p>
               <div className="mt-2 flex gap-2">
                 <Link to="/" className="inline-flex min-h-tap items-center font-semibold text-teal">{tu('nav_home')} →</Link>

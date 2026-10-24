@@ -1,13 +1,18 @@
 import { bcp47 } from '../i18n';
 import { toUTC, type ISODate } from './dates';
 
-function fmt(d: ISODate, opts: Intl.DateTimeFormatOptions): string {
-  const date = new Date(toUTC(d));
+// Browsers without data for a locale silently fall back to US English ("Fri, Oct 30"); use South African English instead.
+function dateLocale(): string {
+  const want = bcp47();
   try {
-    return new Intl.DateTimeFormat(bcp47(), { timeZone: 'UTC', ...opts }).format(date);
+    return Intl.DateTimeFormat.supportedLocalesOf([want]).length ? want : 'en-ZA';
   } catch {
-    return new Intl.DateTimeFormat('en-ZA', { timeZone: 'UTC', ...opts }).format(date);
+    return 'en-ZA';
   }
+}
+
+function fmt(d: ISODate, opts: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(dateLocale(), { timeZone: 'UTC', ...opts }).format(new Date(toUTC(d)));
 }
 
 /** "Thu 30 Oct" */
