@@ -15,7 +15,8 @@
     "test:injection": "node tests/injection.mjs",
     "sync:functions": "node scripts/sync-functions-shared.mjs",
     "test:ai": "node tests/ai-locales.mjs",
-    "translate": "node scripts/translate.mjs"
+    "translate": "node scripts/translate.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
