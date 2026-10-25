@@ -1,0 +1,114 @@
+{
+  "pick": {
+    "frames": 3,
+    "taps": [
+      {
+        "at": 1,
+        "x": 74,
+        "y": 406
+      },
+      {
+        "at": 2,
+        "x": 195,
+        "y": 788
+      }
+    ],
+    "marks": {}
+  },
+  "demo": {
+    "frames": 2,
+    "taps": [
+      {
+        "at": 1,
+        "x": 195,
+        "y": 193
+      }
+    ],
+    "marks": {},
+    "home": {
+      "safe": "R128",
+      "shortfall": "Imali ingaphela ngo-Mgq, Okt 31."
+    }
+  },
+  "type": {
+    "frames": 61,
+    "taps": [
+      {
+        "at": 0,
+        "x": 117,
+        "y": 810
+      },
+      {
+        "at": 1,
+        "x": 112,
+        "y": 368
+      },
+      {
+        "at": 40,
+        "x": 274,
+        "y": 368
+      },
+      {
+        "at": 60,
+        "x": 195,
+        "y": 528
+      }
+    ],
+    "marks": {
+      "fill": 40,
+      "save": 60
+    },
+    "filled": {
+      "amount": "R350\n1\n2\n3\n4\n5\n6\n7\n8\n9\n"
+    },
+    "impact": "Usuku lokunqongophala kwemali lutshintshile ukusuka ku-Mgq, Okt 31 ukuya ku-Hla, Nov 6.\n\nImali ekhuselekileyo yokuchitha: R128 → R190\n\nEkhaya →\nBuyisela"
+  },
+  "why": {
+    "frames": 2,
+    "taps": [
+      {
+        "at": 0,
+        "x": 195,
+        "y": 811
+      },
+      {
+        "at": 1,
+        "x": 195,
+        "y": 675
+      }
+    ],
+    "marks": {}
+  },
+  "scam": {
+    "frames": 65,
+    "taps": [
+      {
+        "at": 0,
+        "x": 273,
+        "y": 810
+      },
+      {
+        "at": 1,
+        "x": 113,
+        "y": 734
+      }
+    ],
+    "marks": {}
+  },
+  "loan": {
+    "frames": 58,
+    "taps": [
+      {
+        "at": 1,
+        "x": 282,
+        "y": 292
+      },
+      {
+        "at": 26,
+        "x": 195,
+        "y": 488
+      }
+    ],
+    "marks": {}
+  }
+}

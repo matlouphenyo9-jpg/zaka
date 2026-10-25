@@ -1,0 +1,17 @@
+{
+  "name": "zaka-demo-video",
+  "private": true,
+  "type": "module",
+  "description": "Zaka demo video (Remotion). Frames come from capture.mjs recording the real app.",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ZakaDemo ../docs/demo/zaka-demo.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.538",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.538"
+  }
+}
