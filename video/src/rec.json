@@ -1,15 +1,10 @@
 {
   "demo": {
     "frames": 2,
-    "taps": [
-      {
-        "at": 1,
-        "x": 195,
-        "y": 193
-      }
-    ],
+    "taps": [],
     "marks": {},
     "home": {
+      "greeting": "Good evening, Lerato",
       "safe": "R128",
       "balance": "R561",
       "shortfall": "Money may run short on Mon, 02 Nov."

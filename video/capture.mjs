@@ -71,12 +71,12 @@ await p.getByText('English', { exact: true }).click();
 await p.getByRole('button', { name: t('continue') }).click();
 await settle();
 await frame(); // 0: sign-in screen with Try the demo
-await tap(p.locator('button:has(.bg-gold)'));
+await p.locator('button:has(.bg-gold)').click(); // the video opens on Home, so no tap ripple here
 await p.waitForSelector('[data-testid=home-scan]', { timeout: 30000 });
 await p.waitForSelector('[data-testid=shortfall]');
 await settle(1500);
 await frame(); // 1: Home before the slip
-meta.demo.home = { safe: await text('[data-testid=safe-amount]'), balance: await text('[data-testid=balance-now]'), shortfall: await text('[data-testid=shortfall]') };
+meta.demo.home = { greeting: await text('[data-testid=greeting]'), safe: await text('[data-testid=safe-amount]'), balance: await text('[data-testid=balance-now]'), shortfall: await text('[data-testid=shortfall]') };
 
 // 2. Snap a slip: sample spaza slip → filled form → saved → Transactions summary
 start('slip');

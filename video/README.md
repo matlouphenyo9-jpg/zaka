@@ -1,6 +1,6 @@
 # Zaka demo video
 
-`docs/demo/zaka-demo.mp4`: 1920×1080, 30 fps, 77 s, no voice, in English. Every phone frame is a screenshot of the real app
+`docs/demo/zaka-demo.mp4`: 1920×1080, 30 fps, 78 s, no voice, in English. Every phone frame is a screenshot of the real app
 (production build, live demo account, live AI) recorded by `capture.mjs` in one pass on a freshly reset demo: typing is
 captured character by character and scrolling frame by frame, and the on-screen numbers are saved to `src/rec.json` so the
 captions can quote them. Remotion only adds the phone frame, captions and tap ripples.
