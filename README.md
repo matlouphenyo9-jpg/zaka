@@ -24,6 +24,7 @@ Captured from a production build at 390×844 with the real demo account and live
 ## Features
 
 - **Safe to spend until {date}**, plus a daily amount, from a 14-day plan that only counts money you can rely on.
+- **Money you have now**, with a tap-to-open "How we got this" breakdown whose lines add up to safe to spend, and **Count my cash**: enter what you really have and Zaka records a visible "Balance correction".
 - **Tight-day warning**: the first day the money is expected to run out, and what would cover the gap.
 - **Type it**: write an entry in your own words in any of the five languages; AI fills the form and you check it before saving. If AI is unavailable, an on-phone parser fills what it can.
 - **Learns patterns** from confirmed history: grant day, recurring weekly money, piece jobs per week, tightest day of the month, biggest spending weekday. Each pattern can be accepted or rejected.
@@ -33,7 +34,9 @@ Captured from a production build at 390×844 with the real demo account and live
 - **Loan Check**: totals what a loan really costs in rands and compares the interest rate, initiation fee and monthly service fee with the legal maximums for eight credit types (National Credit Regulations 42 and 44, repo rate 7.25% from 25 Sep 2026). It is not legal advice.
 - **Works offline**: the last plan is cached on the phone and new entries queue in IndexedDB until there is a connection.
 - **Five languages**: English, isiZulu, isiXhosa, Sepedi and Afrikaans (see below).
-- **Your data, your call**: delete everything from the Me screen.
+- **Your data, your call**: delete everything from the Me screen; read the plain-language [Privacy & Terms](https://zaka.pages.dev/privacy) (POPIA).
+- **Optional 4-digit PIN lock** for shared family phones (see Authentication).
+- **Feedback and sharing**: rate Zaka in the app and share it on WhatsApp with a proper link preview.
 
 ## Architecture
 
@@ -82,28 +85,57 @@ The salary itself is not counted: it is where the plan ends. A second test check
 
 Patterns (grant day, piece-job frequency and so on) come from confirmed history only and are shown with how often they were seen. Confidence is high only with enough history and a pattern seen three or more times.
 
-## Security
+## Real data, processed live (not a static site)
 
-- **Row Level Security on every table.** Users can read and change only their own rows; reference prices are read-only; rate-limit counters are service-role only. **31/31** live checks pass across owner, another user and anonymous access (`npm run test:rls`).
-- **Prompt injection.** Pasted messages are fenced as untrusted data, outputs are schema-checked, and unsafe claims (such as "this message is safe") are blocked. **26/26** live checks pass (`npm run test:injection`).
-- **Edge Functions** require a signed-in user, check the origin against an allow-list, validate input size and shape, and apply per-user limits (parse: 30 an hour / 200 a day; explain: 20 an hour / 100 a day) plus a project-wide daily AI budget. Logs contain no message text or personal data.
-- **Demo lock-down.** The shared demo account's email and password can't be changed and the account can't be deleted. Its data is capped (60 entries, 15 bills, 15 goals, 100 scam checks), and its language change stays on the device. **9/9** checks pass (`node tests/demo-guard.mjs`). Sign-ups are throttled to 60 an hour.
+Every account, entry, bill and goal is stored in Postgres (Supabase) behind Row Level Security and synced in real time; sign-in uses Supabase Auth; "Type it" and Scam Shield call Edge Functions that use the Claude API. The forecast runs on the phone from the user's own data. The only made-up data is the clearly labelled synthetic demo (Lerato), reloaded on each "Try the demo".
+
+## Authentication
+
+- **Generic errors**: any failed sign-in says "Email or password is incorrect", so nobody can find out which emails have accounts; sign-up errors never confirm an existing account.
+- **Cool-down**: after 5 failed sign-ins the form waits 30 seconds (doubling up to 8 minutes), and a page refresh doesn't reset it. Supabase's own server-side rate limits stay on.
+- **Strong passwords**: at least 8 characters with a letter and a number, shown as a live checklist.
+- **Email** is trimmed, lower-cased and format-checked (no spaces, ≤254 characters). Password reset is not offered by email; the sign-in screen points to support@jis-tech.co.za.
+- **Log out wipes the phone**: the session is revoked on the server, then every cached account, unsynced queue, session flag and the auth token are deleted (also when a session expires), so the next person on a shared phone sees nothing. Typing a protected address by hand shows the sign-in screen.
+- **Optional PIN lock** (Me → Security): asked when the app opens and after 5 minutes away. Only a salted PBKDF2-SHA256 hash (210,000 iterations, WebCrypto) is stored, on the phone only; the PIN is never stored or sent. Easy PINs (1234, 0000, 1212…) are refused; 5 wrong tries → 30 s wait, 10 → sign out and wipe. "Forgot your PIN?" signs out, and the password resets it.
+
+## Security & input validation
+
+Every rule holds **on the phone, in the Edge Functions and in the database**, so calling the API directly with the public key gains nothing.
+
+| Input | Rule (phone, server and database) |
+| --- | --- |
+| Amounts | Digits only, ≤2 decimals, more than R0 and at most R1,000,000; "R350", "350,50" and "1 250" accepted; letters, signs, "1e9", emoji refused. Above R50,000 (or a balance above R500,000) asks "is that right?" |
+| Names and notes | Trimmed; control, zero-width and right-to-left override characters removed or refused; at least one letter; names ≤40, notes ≤140 characters. Output is always escaped by React (no `dangerouslySetInnerHTML` anywhere) |
+| Dates | From 1 Jan 2024 to 7 days ahead; bills on day 1–31 (31 falls back to the last day of shorter months) |
+| Type it | 3–200 characters; keyboard-mash and sentences without an amount are refused before any AI call; the AI may answer "unclear", and its amount must be a number the person actually wrote |
+| Scam Shield | 10–2,000 characters with real words (not emoji or symbols only); the server re-runs the warning-sign rules itself, so a client can't tell the AI a scam is "low risk"; the message is never stored |
+| Loan Check | Amount R100–R1,000,000, 0–100% a month or 0–1,000% a year, 1–360 months, fees ≥ R0; never shows NaN or Infinity |
+| Everyday costs | Realistic ranges, e.g. daily transport R0–R1,000, food R0–R10,000 a week |
+| Spam | At most 30 new rows a minute per user per table (a fresh demo is usable at once); demo caps stay |
+
+- **Row Level Security on every table**: users can read and change only their own rows; reference prices are read-only; rate-limit counters can't be read through the API.
+- **Prompt injection**: pasted messages are fenced as untrusted data, outputs are schema-checked, and claims such as "this message is safe" are blocked.
+- **Edge Functions** need a signed-in user, check the origin, validate input and apply per-user limits (parse: 30 an hour / 200 a day; explain: 20 an hour / 100 a day) plus a project-wide daily AI budget. Logs contain no message text or personal data.
+- **Demo lock-down**: the shared demo account's email and password can't be changed and it can't be deleted; its data is capped (60 entries, 15 bills, 15 goals, 100 scam checks); only it may be reset, at most every 15 seconds; clients can't fake "seed" rows to slip past the cap. Sign-ups are throttled to 60 an hour.
+- **Web headers**: strict Content-Security-Policy, HSTS, no framing, no sniffing.
 - **Secrets** (`ANTHROPIC_API_KEY`) live only in Supabase, never in this repository.
 
 ## Test results
 
 | Check | Result | How |
 | --- | --- | --- |
-| Engine unit tests (forecast, patterns, loan, dates…) | 37/37 pass | `npm test` |
+| Unit tests (forecast, balance breakdown, validators, auth rules, PIN, loan, dates…) | 132/132 | `npm test` |
+| Attacks through the API with the public key (bad amounts, text, dates, enums, other users' IDs, fake seed rows, spam, demo abuse, Edge Function input) | 97/97 | `npm run test:attack` |
+| Row Level Security and API abuse | 31/31 | `npm run test:rls` |
+| Prompt injection | 15/15 | `npm run test:injection` |
+| Demo account protections | 11/11 | `npm run test:demo` |
+| Strict-judge browser pass (demo in 3 languages, entries, Type it, Plan, Scam Shield ×3, Loan Check, refresh, new account, log out wipe) | 17/17 | `npm run test:qa` |
+| AI in all 5 languages | 13/13 | `npm run test:ai` |
 | Translation key and placeholder parity | OK | `npm run check:i18n` |
-| Row Level Security and API abuse (live) | 31/31 | `npm run test:rls` |
-| Prompt injection and input validation (live) | 26/26 | `npm run test:injection` |
-| Demo account protections (live) | 9/9 | `node tests/demo-guard.mjs` |
-| AI in all 5 languages (live) | parse 8/8, explain 5/5 | `npm run test:ai` |
 | Small-phone layout, 320 px | 9 screens × 5 languages, no overflow | Playwright |
-| Lighthouse 11, local production build | PWA 100 · Accessibility 100 · Best Practices 100 · SEO 100 · Performance 94 | Lighthouse |
+| Lighthouse 11, local production build (24 Oct) | PWA 100 · Accessibility 100 · Best Practices 100 · SEO 100 · Performance 94 | Lighthouse |
 
-The live checks were last run on 24 Oct 2026 using two QA accounts that were deleted afterwards; re-running them needs QA accounts (`qa-owner@zaka-qa.test`, `qa-other@zaka-qa.test`) to be created first.
+The live checks were run on 26 Oct 2026 with QA accounts (`*@zaka-qa.test`) that are deleted afterwards; re-running them needs those accounts to be created first.
 
 ## Languages
 
