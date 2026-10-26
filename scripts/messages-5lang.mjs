@@ -47,6 +47,11 @@ for (const lang of ['en', 'zu', 'xh', 'nso', 'af']) {
   const typed = p.locator('main p.text-risk').first();
   await typed.waitFor({ timeout: 10000 });
   check(lang, 'Type it gibberish', await typed.innerText(), await p.evaluate(() => document.documentElement.scrollWidth));
+  // Type it: a question for the AI is off topic (no AI call, nothing saved)
+  await p.locator('#typeit').fill("what's the capital of France");
+  await p.locator('#typeit').press('Enter');
+  await p.waitForTimeout(300);
+  check(lang, 'Type it off topic', await p.locator('main p.text-risk').first().innerText(), await p.evaluate(() => document.documentElement.scrollWidth));
   // Slip: a text file is refused on the phone
   await p.goto(`${BASE}/scan`);
   await p.getByTestId('scan-file').setInputFiles(junk);
@@ -60,6 +65,11 @@ for (const lang of ['en', 'zu', 'xh', 'nso', 'af']) {
   const scamErr = p.getByTestId('scam-input-error');
   await scamErr.waitFor({ timeout: 10000 });
   check(lang, 'Scam Shield too short', await scamErr.innerText(), await p.evaluate(() => document.documentElement.scrollWidth));
+  // Scam Shield: a request to the AI isn't a message to check (no AI call)
+  await p.locator('textarea').first().fill('Write a poem about the ocean for me please');
+  await p.locator('main button:has(svg)').filter({ hasText: /./ }).and(p.locator('button.w-full')).first().click();
+  await p.waitForTimeout(300);
+  check(lang, 'Scam Shield not a message', await p.getByTestId('scam-input-error').innerText(), await p.evaluate(() => document.documentElement.scrollWidth));
   // Transactions: empty filter
   await p.goto(`${BASE}/transactions`);
   await p.waitForSelector('[data-testid=tx-lines], main');

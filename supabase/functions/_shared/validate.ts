@@ -130,6 +130,50 @@ export function essentialsError(e: Record<string, unknown>): string | null {
   return null;
 }
 
+/**
+ * Text written TO the app instead of about money or a received message: tasks for an assistant ("write a poem",
+ * "what's the capital of France"), chat with Zaka, attempts to change its rules. Kept narrow on purpose, so real
+ * messages ("Can you send me R500?", "Are we still meeting at 5?") are never caught; the AI decides the rest.
+ */
+const ASSISTANT_TASK = new RegExp(
+  [
+    // English
+    String.raw`^\W*(please\s+)?(write|compose|generate|create|draw|sing)\s+(me\s+)?(a|an|the|some|my)\s+(poem|story|song|essay|letter|joke|code|program|speech|summary|list|cv|recipe)`,
+    String.raw`\b(tell|give)\s+me\s+(a|an|some)\s+(joke|story|poem|fact|recipe|riddle)`,
+    String.raw`\bwhat('?s|\s+is)\s+the\s+(capital|meaning of life|population|square root|weather)\b`,
+    String.raw`\b(ignore|forget|disregard)\s+(all\s+)?(your|the|my|previous|prior|above)\s+(rules|instructions|prompts?|programming)\b`,
+    String.raw`\b(chat|talk)\s+(with|to)\s+me\b|\blet'?s\s+(chat|talk)\b`,
+    String.raw`\bare\s+you\s+(an?\s+)?(ai|bot|robot|chat ?gpt|claude|human|real person)\b|\bwho\s+(made|created|built|trained)\s+you\b|\bwhat\s+can\s+you\s+do\b`,
+    String.raw`\b(show|print|reveal|repeat)\s+(me\s+)?(your|the)\s+(system\s+)?(prompt|instructions|rules)\b`,
+    // isiZulu, isiXhosa, Sepedi, Afrikaans
+    String.raw`\b(bhala|bhalela|ngibhalele|ndibhalele)\s+(inkondlo|umbongo|indaba|ibali|ingoma|ihlaya)\b`,
+    String.raw`\b(yini|yintoni)\s+(inhloko-?dolobha|ikomkhulu)\b|\bke\s+eng\s+motse-?mo[sš]ate\b|\bwat\s+is\s+die\s+hoofstad\b`,
+    String.raw`\b(xoxa|ncokola|bolela|gesels)\s+(nami|nam|le\s+nna|met\s+my)\b`,
+    String.raw`\b(ziba|ungayinaki|tyeshela|hlokomologa|ignoreer)\s+(imithetho|imiyalo|melao|di?taelo|jou\s+re[eë]ls)\b`,
+    String.raw`\b(ngwala|skryf)\s+(sereto|kanegelo|('n\s+)?(gedig|storie|liedjie))\b`,
+  ].join('|'),
+  'i',
+);
+
+export function asksTheAssistant(text: string): boolean {
+  return ASSISTANT_TASK.test(stripInvisible(text));
+}
+
+/** Looks like program code or markup rather than words a person sent or typed. */
+export function looksLikeCode(text: string): boolean {
+  return /(<\/?(script|div|html|body|p|span)\b|\bfunction\s*\w*\s*\(|=>|\b(const|let|var)\s+\w+\s*=|^\s*import\s+.+\s+from\s|\bdef\s+\w+\s*\(|#include\s*<|console\.log|\bSELECT\s+.+\s+FROM\s|\{\s*"[^"]+"\s*:)/im.test(text);
+}
+
+/**
+ * Type it records money in or out only. Questions ("how much did I spend?"), chat ("hello", "thanks") and requests to
+ * the app are off topic: the person is told what Type it does, no AI call is made and nothing is saved.
+ */
+export function offTopicTyped(input: string): boolean {
+  const v = stripInvisible(input).trim();
+  if (asksTheAssistant(v) || looksLikeCode(v) || /\?\s*$/.test(v)) return true;
+  return /^\W*(what|who|why|how|when|where|which|can you|could you|would you|will you|do you|are you|tell me|explain|translate|please|hi|hello|hey|thanks|thank you|good (morning|afternoon|evening)|yini|ngubani|kungani|kanjani|ngicela|sawubona|unjani|ngiyabonga|yintoni|kutheni|ndicela|molo|enkosi|ke eng|ke mang|ka gobaneng|thobela|dumela|ke a leboga|wat|wie|hoekom|hoe|kan jy|asseblief|hallo|dankie|goeie (m[oô]re|middag|naand))\b/i.test(v);
+}
+
 /** A numeric range check for onboarding/price-book style fields; returns the parsed cents or an error. */
 export function inRange(input: string, minCents: number, maxCents: number): Result<number, AmountError | 'out_of_range'> {
   if (String(input).trim() === '0' || String(input).trim() === '0,00' || String(input).trim() === '0.00') {

@@ -420,5 +420,7 @@
   "greet_evening": "Good evening, {name}",
   "greet_morning_plain": "Good morning",
   "greet_afternoon_plain": "Good afternoon",
-  "greet_evening_plain": "Good evening"
+  "greet_evening_plain": "Good evening",
+  "scam_not_message": "This doesn't look like a message to check. Paste the SMS, WhatsApp or email you received.",
+  "type_it_off_topic": "I can only record money in or out. Try: got R350 from a piece job."
 }

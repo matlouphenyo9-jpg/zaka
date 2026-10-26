@@ -1,6 +1,8 @@
 // Scam Shield red-flag rules. Deterministic, run on the phone, before any AI is involved.
 // Never says "safe": the best result is "no common warning signs found".
 
+import { asksTheAssistant, looksLikeCode, looksLikeMash } from '../lib/validate';
+
 export type ScamFlag = 'otp_pin' | 'upfront_fee' | 'urgency' | 'link' | 'too_good' | 'impersonation' | 'new_number' | 'personal_info' | 'prompt_injection';
 export type RiskLevel = 'high' | 'medium' | 'low';
 
@@ -37,4 +39,15 @@ export function checkMessage(text: string): ScamResult {
   if (askForCode || has('upfront_fee') || has('personal_info') || (has('new_number') && MONEY_ASK.test(t)) || others.length >= 3) level = 'high';
   if (has('impersonation') && has('link') && (has('urgency') || has('personal_info') || has('otp_pin'))) level = 'high';
   return { level, flags };
+}
+
+/**
+ * Obvious cases of text that isn't a message someone received: a task or question for an assistant, chat with Zaka,
+ * code, or keyboard-mash. Text with real warning signs (a PIN request, a fee, a link…) is always treated as a message.
+ * The AI decides anything less obvious and can answer not_a_message itself.
+ */
+export function notAMessage(text: string): boolean {
+  const { flags } = checkMessage(text);
+  if (flags.some((f) => f !== 'prompt_injection')) return false;
+  return asksTheAssistant(text) || looksLikeCode(text) || looksLikeMash(text);
 }

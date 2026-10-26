@@ -420,5 +420,7 @@
   "greet_evening": "Molo ngokuhlwa, {name}",
   "greet_morning_plain": "Molo kusasa",
   "greet_afternoon_plain": "Molo emva kwemini",
-  "greet_evening_plain": "Molo ngokuhlwa"
+  "greet_evening_plain": "Molo ngokuhlwa",
+  "scam_not_message": "Oku akubonakali njengomyalezo omawujongwe. Ncamathelisa i-SMS, i-WhatsApp okanye i-imeyile oyifumeneyo.",
+  "type_it_off_topic": "Ndingabhala kuphela imali engenayo okanye ephumayo. Zama: ndifumene i-R350 ngomsebenzi wethutyana."
 }

@@ -420,5 +420,7 @@
   "greet_evening": "Dumela mantšiboa, {name}",
   "greet_morning_plain": "Dumela mesong",
   "greet_afternoon_plain": "Dumela mathapama",
-  "greet_evening_plain": "Dumela mantšiboa"
+  "greet_evening_plain": "Dumela mantšiboa",
+  "scam_not_message": "Se ga se bonagale bjalo ka molaetša wo o swanetšego go hlahlobja. Kgomaretša SMS, WhatsApp goba imeile ye o e amogetšego.",
+  "type_it_off_topic": "Nka ngwala fela tšhelete ye e tsenago goba ye e tšwago. Leka: ke hweditše R350 go piece job."
 }

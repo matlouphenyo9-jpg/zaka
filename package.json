@@ -25,7 +25,8 @@
     "screenshots:b5": "node scripts/screenshots-b5.mjs",
     "samples": "node scripts/gen-sample-slips.mjs",
     "test:audit": "node tests/audit-b6.mjs",
-    "test:messages": "node scripts/messages-5lang.mjs"
+    "test:messages": "node scripts/messages-5lang.mjs",
+    "test:offtopic": "node tests/offtopic.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

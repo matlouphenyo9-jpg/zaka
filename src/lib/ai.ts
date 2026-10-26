@@ -3,19 +3,26 @@ import { supabase } from './supabase';
 import { parseEntryLocally, type ParsedEntry } from '../engine/parse';
 import type { Category } from '../engine/types';
 import { todaySA, isValidISODate } from './dates';
+import { offTopicTyped } from './validate';
 import type { ScamFlag } from '../engine/scam';
 import { validateScan, type ScanResult } from './slipRules';
 
 const ALLOWED: Category[] = ['income', 'grant', 'piece_job', 'salary', 'trade', 'gift', 'transport', 'food', 'electricity', 'data_airtime', 'rent', 'school', 'stokvel', 'savings_goal', 'funeral', 'debt', 'health', 'household', 'other'];
 
-export async function parseEntry(text: string, locale: string): Promise<{ entry: ParsedEntry; via: 'ai' | 'rules' } | null> {
+export async function parseEntry(text: string, locale: string): Promise<{ entry: ParsedEntry; via: 'ai' | 'rules' } | { offTopic: true } | null> {
   const today = todaySA();
+  // Questions, chat and requests are not money in or out: say what Type it does, without asking the AI.
+  if (offTopicTyped(text)) return { offTopic: true };
   if (navigator.onLine) {
     try {
       const { data, error } = await supabase.functions.invoke('parse-entry', { body: { text: text.slice(0, 200), locale, today } });
       // The server read it and found no clear amount and direction: don't let the phone guess instead.
-      const status = (error as { context?: { status?: number } } | null)?.context?.status;
-      if (status === 422 || status === 400) return null;
+      const ctx = (error as { context?: Response } | null)?.context;
+      const status = ctx?.status;
+      if (status === 422 || status === 400) {
+        const body = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null;
+        return body?.reason === 'off_topic' ? { offTopic: true } : null;
+      }
       if (!error && data?.ok) {
         const e = data.entry;
         // Re-validate on the client too: model output is untrusted end to end.
@@ -31,11 +38,16 @@ export async function parseEntry(text: string, locale: string): Promise<{ entry:
   return local ? { entry: local, via: 'rules' } : null;
 }
 
-export async function explainScam(text: string, flags: ScamFlag[], level: string, locale: string): Promise<{ summary: string; next_step: string } | null> {
+export async function explainScam(text: string, flags: ScamFlag[], level: string, locale: string): Promise<{ summary: string; next_step: string } | 'not_a_message' | null> {
   if (!navigator.onLine) return null;
   try {
     const { data, error } = await supabase.functions.invoke('explain-scam', { body: { text: text.slice(0, 2000), flags, level, locale } });
-    if (error || !data?.ok) return null;
+    if (error) {
+      const ctx = (error as { context?: Response }).context;
+      const body = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null;
+      return body?.error === 'not_a_message' ? 'not_a_message' : null;
+    }
+    if (!data?.ok) return null;
     const s = String(data.summary ?? '').slice(0, 600);
     const n = String(data.next_step ?? '').slice(0, 400);
     return s ? { summary: s, next_step: n } : null;

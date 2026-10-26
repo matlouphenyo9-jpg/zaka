@@ -12,7 +12,7 @@ import { formatEstimate, formatRand } from '../lib/money';
 import { addDays, todaySA } from '../lib/dates';
 import { shortDate } from '../lib/format';
 import { parseEntry } from '../lib/ai';
-import { BIG_AMOUNT_CENTS, MAX_AMOUNT_CENTS, MAX_FUTURE_DAYS, MIN_ENTRY_DATE, cleanNote, entryDateError, typedEntryError } from '../lib/validate';
+import { BIG_AMOUNT_CENTS, MAX_AMOUNT_CENTS, MAX_FUTURE_DAYS, MIN_ENTRY_DATE, cleanNote, entryDateError, offTopicTyped, typedEntryError } from '../lib/validate';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
 
@@ -65,11 +65,13 @@ export function AddScreen() {
     // Gibberish never reaches the AI (and never costs anything): explain what works instead.
     const bad = typedEntryError(typed);
     if (bad) return setParseMsg({ tone: 'error', text: tu(bad === 'typed_long' ? 'err_typed_long' : 'type_it_failed') });
+    if (offTopicTyped(typed)) return setParseMsg({ tone: 'error', text: tu('type_it_off_topic') });
     setParsing(true);
     setParseMsg(null);
     try {
       const r = await parseEntry(typed, i18n.language);
       if (!r) return setParseMsg({ tone: 'error', text: tu('type_it_failed') });
+      if ('offTopic' in r) return setParseMsg({ tone: 'error', text: tu('type_it_off_topic') });
       const e = r.entry;
       setDirection(e.direction);
       setAmount(e.amount_cents % 100 ? (e.amount_cents / 100).toFixed(2) : String(e.amount_cents / 100));

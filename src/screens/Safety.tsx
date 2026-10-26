@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button, Card, Chip, Field, ScreenTitle, Segmented } from '../components/ui';
 import { Icon } from '../components/Icon';
-import { checkMessage, type ScamFlag, type ScamResult } from '../engine/scam';
+import { checkMessage, notAMessage, type ScamFlag, type ScamResult } from '../engine/scam';
 import { loanCost, type CreditType, type LoanResult, type Verdict } from '../engine/loan';
 import { CREDIT_TYPES, LEGAL_CHECKED, REPO, rateCap } from '../engine/legal';
 import { BANK_LINES, HELP_CHECKED, HELP_LINES, telHref } from '../data/help';
@@ -36,6 +36,8 @@ function ScamShield() {
     const msg = stripInvisible(raw).trim();
     const bad = scamTextError(msg);
     if (bad) return setInputErr(tu(`err_${bad}`));
+    // A question for an assistant, chat, code or keyboard-mash isn't a message someone received: no check, no AI call.
+    if (notAMessage(msg)) return setInputErr(tu('scam_not_message'));
     setInputErr(null);
     const r = checkMessage(msg);
     setResult(r);
@@ -43,6 +45,11 @@ function ScamShield() {
     void supabase.from('scam_checks').insert({ risk_level: r.level, flags: r.flags }).then(() => undefined, () => undefined);
     setAi({ state: 'loading' });
     const ex = await explainScam(msg, r.flags, r.level, i18n.language);
+    if (ex === 'not_a_message') {
+      setResult(null);
+      setAi({ state: 'idle' });
+      return setInputErr(tu('scam_not_message'));
+    }
     setAi(ex ? { state: 'done', ...ex } : { state: 'failed' });
   }
 

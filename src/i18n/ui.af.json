@@ -420,5 +420,7 @@
   "greet_evening": "Goeie naand, {name}",
   "greet_morning_plain": "Goeie môre",
   "greet_afternoon_plain": "Goeie middag",
-  "greet_evening_plain": "Goeie naand"
+  "greet_evening_plain": "Goeie naand",
+  "scam_not_message": "Dit lyk nie na ’n boodskap om na te gaan nie. Plak die SMS, WhatsApp of e-pos wat jy ontvang het.",
+  "type_it_off_topic": "Ek kan net geld in of uit aanteken. Probeer: R350 gekry vir ’n stukwerkie."
 }

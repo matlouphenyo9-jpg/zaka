@@ -420,5 +420,7 @@
   "greet_evening": "Sawubona kusihlwa, {name}",
   "greet_morning_plain": "Sawubona ekuseni",
   "greet_afternoon_plain": "Sawubona ntambama",
-  "greet_evening_plain": "Sawubona kusihlwa"
+  "greet_evening_plain": "Sawubona kusihlwa",
+  "scam_not_message": "Lokhu akubukeki njengomlayezo okumele uhlolwe. Namathisela i-SMS, i-WhatsApp noma i-imeyili oyitholile.",
+  "type_it_off_topic": "Ngingabhala kuphela imali engenayo noma ephumayo. Zama: ngithole u-R350 emsebenzini wesikhashana."
 }
