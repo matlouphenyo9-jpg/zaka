@@ -349,7 +349,7 @@
   "pin_wiped": "Too many wrong tries. For your safety Zaka signed out and cleared this phone.",
   "pin_forgot": "Forgot your PIN? Sign in again with your password",
   "auth_signup_done": "Done. If this email is new, your account is ready (check your email if we ask you to confirm). If you already have an account, use its password. Tap Sign in to continue.",
-  "scan_cta": "📸 Snap or upload a slip",
+  "scan_cta": "Snap or upload a slip",
   "scan_short": "Slip",
   "scan_title": "Snap or upload a slip",
   "scan_privacy": "Photos and PDFs are read once to fill in your entry, then thrown away. You check everything before it is saved.",
