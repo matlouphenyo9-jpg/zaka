@@ -2,7 +2,7 @@
 // so the forecast recomputes and entries can be added with no connection.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { del, get, set } from 'idb-keyval';
+import { del, get, keys, set } from 'idb-keyval';
 import { supabase } from './supabase';
 import type { Essentials, Goal, IncomePlanItem, Obligation, Txn } from '../engine/types';
 import { setLocale, type LocaleCode } from '../i18n';
@@ -59,6 +59,35 @@ const queueKey = (uid: string) => `zaka:queue:${uid}`;
 const PRICE_KEY = 'zaka:price_book';
 export const DEMO_RESEED_KEY = 'zaka.demo.reseed';
 /** Set when the shared demo account's language is changed on this device only. */
+
+/**
+ * Removes everything Zaka keeps on this phone for any account: cached data, unsynced queues, session flags and the
+ * auth token. Used on log out and forced sign-out (shared family phones). With `keepUid`, only other accounts'
+ * leftovers are removed (e.g. a previous user whose session simply expired).
+ */
+export async function wipeDevice(keepUid?: string): Promise<void> {
+  const all = (await keys().catch(() => [])) as IDBValidKey[];
+  const mine = (k: string) => !!keepUid && k.endsWith(`:${keepUid}`);
+  await Promise.all(
+    all
+      .filter((k): k is string => typeof k === 'string' && (k.startsWith('zaka:data:') || k.startsWith('zaka:queue:')) && !mine(k))
+      .map((k) => del(k).catch(() => undefined)),
+  );
+  if (keepUid) return;
+  try {
+    for (const k of Object.keys(sessionStorage)) if (k.startsWith('zaka.')) sessionStorage.removeItem(k);
+    for (const k of Object.keys(localStorage)) if (k.startsWith('zaka.auth') || k.startsWith('zaka.pin') || k.startsWith('zaka.login')) localStorage.removeItem(k);
+  } catch {
+    /* storage blocked: nothing to wipe */
+  }
+}
+
+/** Revokes the session on the server first (max 4 s, so an offline phone still logs out), then wipes the phone. */
+async function endSession(): Promise<void> {
+  await Promise.race([supabase.auth.signOut().catch(() => undefined), new Promise((r) => setTimeout(r, 4000))]);
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+  await wipeDevice();
+}
 
 export const uuid = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -125,7 +154,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setAuthReady(true);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      // An expired or revoked session also wipes the phone, not only a tap on "Log out".
+      if (event === 'SIGNED_OUT') void wipeDevice();
+      setSession(s);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -244,6 +277,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return;
     }
     (async () => {
+      await wipeDevice(uid); // leftovers from anyone else who used this phone
       const cached = (await get(cacheKey(uid)).catch(() => null)) as AppData | null;
       if (cached && !cancelled) {
         setData(cached);
@@ -355,15 +389,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(async () => {
     const { error } = await supabase.rpc('delete_my_data');
     if (error) throw error;
-    await clearLocal();
-    await supabase.auth.signOut();
-  }, [clearLocal]);
+    setData(EMPTY);
+    await endSession();
+  }, []);
 
   const signOut = useCallback(async () => {
-    // Clear this phone's copy so the next person on a shared phone sees nothing.
-    await clearLocal();
-    await supabase.auth.signOut();
-  }, [clearLocal]);
+    // Clear this phone's copy so the next person on a shared phone sees nothing, even if the network call fails.
+    setData(EMPTY);
+    await endSession();
+  }, []);
 
   const value = useMemo<Ctx>(() => ({
     session, authReady, data, dataReady, online, pending, priceBook, lastSynced,

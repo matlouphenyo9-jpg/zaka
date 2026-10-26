@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { SUPPORT_EMAIL, authErrorKey, checkPassword, clearFailures, cooldownLeft, normaliseEmail, recordFailure } from '../lib/authRules';
 import { DEMO_EMAIL, DEMO_PASSWORD, supabase } from '../lib/supabase';
 import { DEMO_RESEED_KEY } from '../lib/store';
 import { Button, Field } from '../components/ui';
@@ -13,19 +15,37 @@ export function AuthScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const [wait, setWait] = useState(() => Math.ceil(cooldownLeft() / 1000));
+  const pw = checkPassword(password);
+
+  // Count down a cool-down (it survives a refresh because it is stored on the phone).
+  useEffect(() => {
+    if (wait <= 0) return;
+    const id = setInterval(() => setWait(Math.ceil(cooldownLeft() / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [wait]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!navigator.onLine) return setMsg({ tone: 'error', text: t('auth_offline') });
+    if (cooldownLeft() > 0) return setWait(Math.ceil(cooldownLeft() / 1000));
+    const cleanEmail = normaliseEmail(email);
+    if (!cleanEmail) return setMsg({ tone: 'error', text: t('auth_email_invalid') });
+    if (mode === 'signup' && !pw.ok) return setMsg({ tone: 'error', text: t('auth_password_rule') });
+    setEmail(cleanEmail);
     setBusy(true);
     setMsg(null);
     try {
       if (mode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) setMsg({ tone: 'error', text: t('auth_error') });
+        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        if (error) {
+          const left = recordFailure();
+          setWait(Math.ceil(left / 1000));
+          setMsg({ tone: 'error', text: t(authErrorKey(error, 'signin')) });
+        } else clearFailures();
       } else {
-        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
-        if (error) setMsg({ tone: 'error', text: error.message });
+        const { data, error } = await supabase.auth.signUp({ email: cleanEmail, password });
+        if (error) setMsg({ tone: 'error', text: t(authErrorKey(error, 'signup')) });
         else if (!data.session) setMsg({ tone: 'info', text: t('auth_check_email') });
       }
     } finally {
@@ -65,29 +85,53 @@ export function AuthScreen() {
 
       <h1 className="text-xl font-bold text-ink">{mode === 'signin' ? t('auth_title') : t('auth_signup_title')}</h1>
       <form onSubmit={submit} className="mt-4 space-y-4" noValidate>
-        <Field label={t('auth_email')} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Field label={t('auth_email')} type="email" autoComplete="email" inputMode="email" maxLength={254} autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Field
           label={t('auth_password')}
           type="password"
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           value={password}
           minLength={8}
-          hint={mode === 'signup' ? t('auth_password_hint') : undefined}
+          maxLength={72}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        {mode === 'signup' && (
+          <ul className="space-y-1 text-sm" aria-live="polite" data-testid="pw-rules">
+            {(['length', 'letter', 'number'] as const).map((k) => (
+              <li key={k} className={`flex items-center gap-2 ${pw[k] ? 'text-teal-dark' : 'text-ink-soft'}`}>
+                <Icon name={pw[k] ? 'check' : 'info'} size={16} /> {t(`auth_pw_${k}`)}
+              </li>
+            ))}
+          </ul>
+        )}
+        {wait > 0 && (
+          <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 text-[15px] font-semibold text-amber-ink" data-testid="cooldown">
+            {t('auth_cooldown', { n: wait })}
+          </p>
+        )}
         {msg && (
           <p role="alert" className={`rounded-xl px-4 py-3 text-[15px] ${msg.tone === 'error' ? 'bg-risk-soft text-risk' : 'bg-teal-soft text-teal-dark'}`}>
             {msg.text}
           </p>
         )}
-        <Button block type="submit" disabled={busy || !email || password.length < (mode === 'signup' ? 8 : 1)}>
+        <Button block type="submit" disabled={busy || wait > 0 || !email || (mode === 'signup' ? !pw.ok : password.length < 1)}>
           {busy ? t('signing_in') : mode === 'signin' ? t('auth_signin') : t('auth_signup')}
         </Button>
       </form>
       <button className="mt-4 min-h-tap text-base font-semibold text-teal" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setMsg(null); }}>
         {mode === 'signin' ? t('auth_switch_to_signup') : t('auth_switch_to_signin')}
       </button>
+      {mode === 'signin' && (
+        <p className="mt-2 text-[15px] text-ink-soft">
+          {t('auth_forgot')} <a className="font-semibold text-teal underline underline-offset-2" href={`mailto:${SUPPORT_EMAIL}?subject=Zaka%20password`}>{SUPPORT_EMAIL}</a>
+        </p>
+      )}
+      {mode === 'signup' && (
+        <p className="mt-2 text-sm text-ink-soft">
+          {t('auth_terms_pre')} <Link to="/privacy" className="font-semibold text-teal underline underline-offset-2">{t('privacy_link')}</Link>
+        </p>
+      )}
     </div>
   );
 }

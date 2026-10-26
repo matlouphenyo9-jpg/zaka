@@ -20,7 +20,7 @@
   "auth_demo": "Try the demo (Lerato)",
   "auth_demo_note": "Synthetic demo data — not a real person.",
   "auth_check_email": "Check your email to confirm your account, then sign in.",
-  "auth_error": "We couldn't sign you in. Check your email and password.",
+  "auth_error": "Email or password is incorrect.",
   "auth_offline": "You need a connection to sign in the first time.",
   "signing_in": "Signing in…",
   "consent_title": "Before we start",
@@ -275,5 +275,16 @@
   "err_amount_too_big": "That's more than R1,000,000. Please check the amount.",
   "err_text_empty": "Please fill this in.",
   "err_text_too_long": "That's too long. Please shorten it.",
-  "err_text_no_letters": "Please use words, not only symbols or numbers."
+  "err_text_no_letters": "Please use words, not only symbols or numbers.",
+  "auth_email_invalid": "Please enter a valid email address, like name@example.com.",
+  "auth_password_rule": "Use at least 8 characters with a letter and a number.",
+  "auth_pw_length": "At least 8 characters",
+  "auth_pw_letter": "At least one letter",
+  "auth_pw_number": "At least one number",
+  "auth_cooldown": "Too many tries. Try again in {n} seconds.",
+  "auth_rate_limited": "Too many tries right now. Please wait a minute and try again.",
+  "auth_signup_failed": "We couldn't create that account. If you already have one, sign in instead.",
+  "auth_forgot": "Forgot your password? Email",
+  "auth_terms_pre": "By creating an account you agree to our",
+  "privacy_link": "Privacy & Terms"
 }
