@@ -21,13 +21,13 @@ describe('parseRands: South African amount formats', () => {
     ["'; drop table transactions;--", 'amount_invalid'], ['<script>alert(1)</script>', 'amount_invalid'],
   ])('rejects %j', (input, err) => expect(ok(input)).toBe(err));
 
-  it('ignores invisible characters hidden inside a number', () => expect(ok('3​50')).toBe(35000));
+  it('ignores invisible characters hidden inside a number', () => expect(ok('3\u200B50')).toBe(35000));
 });
 
 describe('text fields', () => {
   it('trims, collapses spaces and strips invisible and bidi-override characters', () => {
-    expect(cleanName('  Rent ​  money ‮ ')).toEqual({ ok: true, value: 'Rent money' });
-    expect(stripInvisible('a‮b⁦c﻿d')).toBe('abcd');
+    expect(cleanName('  Rent \u200B  money \u202E ')).toEqual({ ok: true, value: 'Rent money' });
+    expect(stripInvisible('a\u202Eb\u2066c\uFEFFd')).toBe('abcd');
   });
   it('rejects keyboard-mash with no letters', () => {
     expect(cleanName('!!!!!')).toEqual({ ok: false, error: 'text_no_letters' });
@@ -86,5 +86,17 @@ describe('Type it and Scam Shield input', () => {
     expect(scamTextError('!!!!!!!!!!!!!!!!!!!')).toBe('scam_no_words');
     expect(scamTextError('a'.repeat(2001))).toBe('scam_long');
     expect(scamTextError('SASSA: pay R50 to release your grant')).toBeNull();
+  });
+});
+
+describe('everyday costs stay realistic (same limits as the database)', () => {
+  it('flags the first out-of-range field', async () => {
+    const { essentialsError } = await import('./validate');
+    expect(essentialsError({ transport_daily_cents: 4800, food_weekly_cents: 60000, trips_per_day: 2 })).toBeNull();
+    expect(essentialsError({ transport_daily_cents: 100_001 })).toBe('transport_daily_cents');
+    expect(essentialsError({ food_weekly_cents: 2_000_000 })).toBe('food_weekly_cents');
+    expect(essentialsError({ trips_per_day: 11 })).toBe('trips_per_day');
+    expect(essentialsError({ data_weekly_cents: -1 })).toBe('data_weekly_cents');
+    expect(essentialsError({ fare_single_cents: Number.NaN })).toBe('fare_single_cents');
   });
 });

@@ -10,6 +10,7 @@ import { longDate } from '../lib/format';
 import { explainScam } from '../lib/ai';
 import { supabase } from '../lib/supabase';
 import { formatRand, parseRandInput } from '../lib/money';
+import { scamTextError, stripInvisible } from '../lib/validate';
 
 const FLAG_ICON: Record<ScamFlag, string> = {
   otp_pin: 'shield', upfront_fee: 'debt', urgency: 'warning', link: 'link', too_good: 'gift',
@@ -28,8 +29,14 @@ function ScamShield() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<ScamResult | null>(null);
   const [ai, setAi] = useState<{ state: 'idle' | 'loading' | 'done' | 'failed'; summary?: string; next_step?: string }>({ state: 'idle' });
+  const [inputErr, setInputErr] = useState<string | null>(null);
 
-  async function check(msg = text) {
+  async function check(raw = text) {
+    // Empty, emoji-only or symbol-only text is refused here and again on the server (no AI call, nothing stored).
+    const msg = stripInvisible(raw).trim();
+    const bad = scamTextError(msg);
+    if (bad) return setInputErr(tu(`err_${bad}`));
+    setInputErr(null);
     const r = checkMessage(msg);
     setResult(r);
     // Only the outcome is stored, never the message.
@@ -58,6 +65,7 @@ function ScamShield() {
             />
             <p className="mt-1.5 flex items-start gap-2 text-sm text-ink-soft"><Icon name="info" size={18} className="shrink-0" />{t('privacy')}</p>
           </div>
+          {inputErr && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 font-semibold text-amber-ink" data-testid="scam-input-error">{inputErr}</p>}
           <Button block icon="shield" disabled={!text.trim()} onClick={() => check()}>{t('check')}</Button>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((ex, i) => (
@@ -186,17 +194,20 @@ function LoanCheck() {
     const p = parseRandInput(principal);
     const [fi, fs, fo] = [opt(initFee), opt(serviceFee), opt(fees)];
     const n = Number(term);
-    const r = Number(rate.replace(',', '.'));
+    // Strict number format: "1e3", "Infinity" or "--5" can never reach the maths (no NaN or Infinity on screen).
+    const rateText = rate.trim().replace(',', '.');
+    const r = /^\d{1,4}(\.\d{1,2})?$/.test(rateText) ? Number(rateText) : NaN;
     const i = parseRandInput(interest);
-    const rateOk = mode === 'rand' ? i != null : rate.trim() !== '' && r >= 0 && r <= (mode === 'pct_month' ? 100 : 1200);
-    if (!p || fi == null || fs == null || fo == null || !(n > 0 && n <= 360) || !rateOk) {
+    const rateOk = mode === 'rand' ? i != null : Number.isFinite(r) && r >= 0 && r <= (mode === 'pct_month' ? 100 : 1000);
+    const principalOk = p != null && p >= 10_000 && p <= 100_000_000; // R100 – R1,000,000
+    if (!principalOk || fi == null || fs == null || fo == null || !(Number.isInteger(n) && n >= 1 && n <= 360) || !rateOk) {
       setMissing(true);
       setRes(null);
       return;
     }
     setMissing(false);
     setRes(loanCost({
-      principal_cents: p,
+      principal_cents: p!,
       interest: mode === 'rand' ? { mode, cents: i! } : { mode, rate: r },
       initiation_cents: fi, service_monthly_cents: fs, other_fees_cents: fo,
       term_months: n, type,
@@ -231,7 +242,7 @@ function LoanCheck() {
         <Field label={tu('loan_service_fee')} inputMode="decimal" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
       </div>
       <Field label={t('fees')} inputMode="decimal" value={fees} onChange={(e) => setFees(e.target.value)} />
-      {missing && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 text-amber-ink">{t('missing_terms')}</p>}
+      {missing && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 text-amber-ink">{t('missing_terms')} {tu('loan_ranges')}</p>}
       <Button block icon="calc" onClick={calc}>{t('show_total')}</Button>
 
       {res && (

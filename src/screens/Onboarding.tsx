@@ -5,6 +5,7 @@ import { Button, Chip, Field } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { Logo } from '../components/Logo';
 import { formatRand, parseRandInput } from '../lib/money';
+import { essentialsError } from '../lib/validate';
 import { todaySA } from '../lib/dates';
 import { longDate } from '../lib/format';
 import type { IncomePlanItem, IncomeSource, Obligation } from '../engine/types';
@@ -176,13 +177,12 @@ export function costsToEssentials(d: CostsDraft, book: PriceItem[]) {
     transport_daily_cents: daily,
     workdays: [1, 2, 3, 4, 5, 6, 0].slice(0, wd),
     fare_single_cents: parseRandInput(d.fare),
-    trips_per_day: Number(d.trips) || 2,
+    trips_per_day: Math.min(10, Math.max(1, Math.round(Number(d.trips) || 2))),
     price_ref: d.fareRef,
     food_weekly_cents: cents(d.food),
     electricity_weekly_cents: cents(d.electricity),
     data_weekly_cents: cents(d.data),
-    km_each_way: d.km || null,
-    l_per_100km: d.lper100 || null,
+    // km_each_way / l_per_100km are not stored until the database accepts them (B4: supabase/manual SQL).
   };
 }
 
@@ -193,6 +193,7 @@ export function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [balance, setBalance] = useState('');
   const [balanceErr, setBalanceErr] = useState<string | null>(null);
+  const [costsErr, setCostsErr] = useState<string | null>(null);
   const csg = priceBook.find((p) => p.id === 'grant-csg')?.price_cents;
   const [income, setIncome] = useState<Record<IncomeSource, IncomeDraft>>({
     grant: { on: false, day: '3', perWeek: '', amount: '' },
@@ -323,7 +324,8 @@ export function OnboardingScreen() {
         <section className="mt-2">
           <h1 className="mb-1 text-[1.6rem] font-bold leading-tight">{tu('onb_costs_title')}</h1>
           <p className="mb-5 text-base text-ink-soft">{t('essential_costs')}</p>
-          <CostsEditor draft={costs} set={(p) => setCosts({ ...costs, ...p })} />
+          <CostsEditor draft={costs} set={(p) => { setCosts({ ...costs, ...p }); setCostsErr(null); }} />
+          {costsErr && <p role="alert" className="mt-3 rounded-xl bg-amber-soft px-4 py-3 font-semibold text-amber-ink" data-testid="costs-error">{costsErr}</p>}
 
           <div className="mt-6">
             <p className="mb-2 text-base font-semibold">{tu('onb_obligations')}</p>
@@ -369,6 +371,8 @@ export function OnboardingScreen() {
             className="flex-1"
             onClick={() => {
               if (step === 0 && balance.trim() && parseRandInput(balance) == null) return setBalanceErr(t('amount_error'));
+              if (step === 2 && essentialsError(costsToEssentials(costs, priceBook))) return setCostsErr(tu('err_out_of_range'));
+              setCostsErr(null);
               setStep(step + 1);
             }}
           >

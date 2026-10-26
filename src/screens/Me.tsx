@@ -9,7 +9,10 @@ import { centsToInput, formatRand, parseRandInput } from '../lib/money';
 import { weekdayFromIndex } from '../lib/format';
 import { BalanceCard } from '../components/Balance';
 import { useForecast } from '../lib/useForecast';
-import { NAME_MAX, cleanName } from '../lib/validate';
+import { NAME_MAX, cleanName, essentialsError } from '../lib/validate';
+
+/** Editor-only keys the database does not store yet. */
+const stripUiKeys = (e: object = {}) => Object.fromEntries(Object.entries(e).filter(([k]) => k !== 'km_each_way' && k !== 'l_per_100km'));
 import type { Obligation } from '../engine/types';
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
@@ -55,6 +58,7 @@ export function MeScreen() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [obErr, setObErr] = useState<string | null>(null);
 
 
   return (
@@ -188,7 +192,9 @@ export function MeScreen() {
       <Sheet open={costsOpen} onClose={() => setCostsOpen(false)} title={tu('me_presets')}>
         <CostsEditor draft={costs} set={(x) => setCosts({ ...costs, ...x })} />
         <Button block className="mt-6" onClick={async () => {
-          await saveProfile({ essentials: { ...p.essentials, ...costsToEssentials(costs, priceBook) }, transport_mode: costs.mode, city: costs.city });
+          const next = costsToEssentials(costs, priceBook);
+          if (essentialsError(next)) return setError(tu('err_out_of_range'));
+          await saveProfile({ essentials: { ...stripUiKeys(p.essentials), ...next }, transport_mode: costs.mode, city: costs.city });
           setCostsOpen(false);
           setToast(tu('me_saved'));
         }}>{t('save')}</Button>
@@ -207,11 +213,16 @@ export function MeScreen() {
               <Field label={t('amount')} inputMode="decimal" value={ob.amount} onChange={(e) => setOb({ ...ob, amount: e.target.value })} />
               <Field label={tu('onb_ob_day')} inputMode="numeric" value={ob.day} onChange={(e) => setOb({ ...ob, day: e.target.value.replace(/\D/g, '').slice(0, 2) })} />
             </div>
+            {obErr && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 font-semibold text-amber-ink">{obErr}</p>}
             <Button block onClick={async () => {
               const amt = parseRandInput(ob.amount);
               const day = Number(ob.day);
-              if (!ob.name.trim() || !amt || !(day >= 1 && day <= 31)) return;
-              await saveObligation({ name: ob.name.trim(), amount_cents: amt, due_kind: 'monthly', due_day: day, category: ob.category, active: true });
+              const nm = cleanName(ob.name);
+              if (!nm.ok) return setObErr(tu(`err_${nm.error}`));
+              if (!amt) return setObErr(tu('err_amount_invalid'));
+              if (!(Number.isInteger(day) && day >= 1 && day <= 31)) return setObErr(tu('err_bill_day'));
+              setObErr(null);
+              await saveObligation({ name: nm.value, amount_cents: amt, due_kind: 'monthly', due_day: day, category: ob.category, active: true });
               setOb(null);
               setToast(tu('me_saved'));
             }}>{t('save')}</Button>

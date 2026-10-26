@@ -8,9 +8,10 @@ import { Icon } from '../components/Icon';
 import { CATEGORY_ICON, IN_CATEGORIES, OUT_CATEGORIES, sourceFor } from '../engine/categories';
 import type { Category, Direction } from '../engine/types';
 import { formatEstimate, formatRand } from '../lib/money';
-import { addDays, isValidISODate, todaySA } from '../lib/dates';
+import { addDays, todaySA } from '../lib/dates';
 import { shortDate } from '../lib/format';
 import { parseEntry } from '../lib/ai';
+import { BIG_AMOUNT_CENTS, MAX_AMOUNT_CENTS, MAX_FUTURE_DAYS, MIN_ENTRY_DATE, cleanNote, entryDateError, typedEntryError } from '../lib/validate';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
 
@@ -25,7 +26,8 @@ export function AddScreen() {
   const [paidWith, setPaidWith] = useState<'cash' | 'bank'>('cash');
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
-  const [errors, setErrors] = useState<{ amount?: string; date?: string; category?: string }>({});
+  const [errors, setErrors] = useState<{ amount?: string; date?: string; category?: string; note?: string }>({});
+  const [confirmBig, setConfirmBig] = useState(false);
   const [via, setVia] = useState<'manual' | 'ai_parsed'>('manual');
   const [typed, setTyped] = useState('');
   const [parsing, setParsing] = useState(false);
@@ -42,6 +44,7 @@ export function AddScreen() {
 
   function press(k: string) {
     setErrors((e) => ({ ...e, amount: undefined }));
+    setConfirmBig(false);
     if (k === 'del') return setAmount((a) => a.slice(0, -1));
     setAmount((a) => {
       if (k === '.' && (a.includes('.') || a === '')) return a === '' ? '0.' : a;
@@ -54,6 +57,9 @@ export function AddScreen() {
 
   async function fillFromText() {
     if (!typed.trim()) return;
+    // Gibberish never reaches the AI (and never costs anything): explain what works instead.
+    const bad = typedEntryError(typed);
+    if (bad) return setParseMsg({ tone: 'error', text: tu(bad === 'typed_long' ? 'err_typed_long' : 'type_it_failed') });
     setParsing(true);
     setParseMsg(null);
     try {
@@ -75,10 +81,17 @@ export function AddScreen() {
   async function save() {
     const errs: typeof errors = {};
     if (!(cents > 0)) errs.amount = t('amount_error');
-    if (!isValidISODate(date) || date > addDays(today, 60) || date < '2020-01-01') errs.date = t('date_error');
+    else if (cents > MAX_AMOUNT_CENTS) errs.amount = tu('err_amount_too_big');
+    const dErr = entryDateError(date, today);
+    if (dErr) errs.date = tu(`err_${dErr}`);
     if (!category) errs.category = t('choose_category');
+    const n = cleanNote(note);
+    if (!n.ok) errs.note = tu(`err_${n.error}`);
     setErrors(errs);
     if (Object.keys(errs).length) return;
+    // Unusual amounts get one "is that right?" step.
+    if (cents > BIG_AMOUNT_CENTS && !confirmBig) return setConfirmBig(true);
+    setConfirmBig(false);
 
     const before = forecastFor(data, today);
     const { queued, txn } = await addTxn({
@@ -86,7 +99,7 @@ export function AddScreen() {
       amount_cents: cents,
       category: category!,
       source: sourceFor(category!, paidWith),
-      note: note.trim() ? note.trim().slice(0, 140) : null,
+      note: (n.ok && n.value) || null,
       occurred_on: date,
       created_via: via,
       confirmed: true,
@@ -210,12 +223,17 @@ export function AddScreen() {
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <Field label={t('entry_date')} type="date" value={date} max={addDays(today, 60)} onChange={(e) => setDate(e.target.value)} error={errors.date} />
-        <Field label={t('note')} value={note} maxLength={140} onChange={(e) => setNote(e.target.value)} />
+        <Field label={t('entry_date')} type="date" value={date} min={MIN_ENTRY_DATE} max={addDays(today, MAX_FUTURE_DAYS)} onChange={(e) => setDate(e.target.value)} error={errors.date} />
+        <Field label={t('note')} value={note} maxLength={140} onChange={(e) => { setNote(e.target.value); setErrors((x) => ({ ...x, note: undefined })); }} error={errors.note} />
       </div>
 
+      {confirmBig && (
+        <p role="alert" className="mt-4 rounded-xl bg-amber-soft px-4 py-3 font-semibold text-amber-ink" data-testid="big-confirm">
+          {tu('big_amount_confirm', { amount: formatRand(cents) })}
+        </p>
+      )}
       <Button block className="mt-5" onClick={save} icon="check">
-        {t('save_entry')}
+        {confirmBig ? tu('big_amount_yes') : t('save_entry')}
       </Button>
       {!navigator.onLine && <p className="mt-3 rounded-xl bg-amber-soft px-4 py-3 text-[15px] text-amber-ink">{t('offline')}</p>}
 

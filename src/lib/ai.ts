@@ -12,6 +12,9 @@ export async function parseEntry(text: string, locale: string): Promise<{ entry:
   if (navigator.onLine) {
     try {
       const { data, error } = await supabase.functions.invoke('parse-entry', { body: { text: text.slice(0, 200), locale, today } });
+      // The server read it and found no clear amount and direction: don't let the phone guess instead.
+      const status = (error as { context?: { status?: number } } | null)?.context?.status;
+      if (status === 422 || status === 400) return null;
       if (!error && data?.ok) {
         const e = data.entry;
         // Re-validate on the client too: model output is untrusted end to end.

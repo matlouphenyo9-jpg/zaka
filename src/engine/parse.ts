@@ -51,10 +51,12 @@ export function parseEntryLocally(text: string, today: ISODate): ParsedEntry | n
   if (amount == null) return null;
   let category: Category | null = null;
   for (const [re, c] of CATS) if (re.test(t)) { category = c; break; }
+  // Both an amount and a clear direction are needed; otherwise nothing is proposed (B4: never guess).
   let direction: Direction;
   if (category && INCOME_CATS.includes(category)) direction = 'in';
   else if (IN_WORDS.test(t) && !OUT_WORDS.test(t)) direction = 'in';
-  else direction = 'out';
+  else if (category || OUT_WORDS.test(t)) direction = 'out';
+  else return null;
   if (!category) category = direction === 'in' ? 'income' : 'other';
 
   let occurred_on = today;

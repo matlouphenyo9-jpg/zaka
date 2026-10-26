@@ -9,7 +9,8 @@ import { insightIcon, useInsightText } from '../components/InsightText';
 import { formatEstimate, formatRand, parseRandInput } from '../lib/money';
 import { SafeBreakdownList } from '../components/Balance';
 import { shortDate, longDate, weekdayFromIndex } from '../lib/format';
-import { addDays, diffDays, todaySA } from '../lib/dates';
+import { addDays, diffDays, isValidISODate, todaySA } from '../lib/dates';
+import { cleanName } from '../lib/validate';
 import { savedForGoal, stokvelPlan, type Forecast } from '../engine/forecast';
 import { buildInsights } from '../engine/insights';
 import type { IncomePlanItem } from '../engine/types';
@@ -180,6 +181,7 @@ function GoalCard() {
   const [amt, setAmt] = useState('');
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState({ name: '', target: '', due: addDays(today, 56) });
+  const [goalErr, setGoalErr] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   if (!goal) {
@@ -188,12 +190,22 @@ function GoalCard() {
         <p className="flex items-center gap-2 font-semibold"><Icon name="savings_goal" className="text-teal" /> {t('goal')}</p>
         {creating ? (
           <div className="mt-3 space-y-3">
-            <Field label={tu('goal_name')} value={draft.name} maxLength={60} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <Field label={tu('goal_name')} value={draft.name} maxLength={40} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('goal_amount')} inputMode="decimal" value={draft.target} onChange={(e) => setDraft({ ...draft, target: e.target.value })} />
               <Field label={t('goal_due')} type="date" min={addDays(today, 1)} value={draft.due} onChange={(e) => setDraft({ ...draft, due: e.target.value })} />
             </div>
-            <Button block onClick={async () => { const c = parseRandInput(draft.target); if (!draft.name.trim() || !c) return; await saveGoal({ name: draft.name.trim(), target_cents: c, due_on: draft.due, kind: 'savings' }); setCreating(false); }}>{t('save')}</Button>
+            {goalErr && <p role="alert" className="rounded-xl bg-amber-soft px-4 py-3 font-semibold text-amber-ink">{goalErr}</p>}
+            <Button block onClick={async () => {
+              const c = parseRandInput(draft.target);
+              const nm = cleanName(draft.name);
+              if (!nm.ok) return setGoalErr(tu(`err_${nm.error}`));
+              if (!c) return setGoalErr(tu('err_amount_invalid'));
+              if (!isValidISODate(draft.due) || draft.due <= today || draft.due > addDays(today, 3650)) return setGoalErr(tu('err_date_invalid'));
+              setGoalErr(null);
+              await saveGoal({ name: nm.value, target_cents: c, due_on: draft.due, kind: 'savings' });
+              setCreating(false);
+            }}>{t('save')}</Button>
           </div>
         ) : (
           <Button variant="secondary" className="mt-3" icon="plus" onClick={() => setCreating(true)}>{tu('goal_new')}</Button>

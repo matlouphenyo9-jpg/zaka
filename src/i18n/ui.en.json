@@ -95,7 +95,7 @@
   "type_it_go": "Fill the form",
   "type_it_busy": "Reading…",
   "type_it_fallback": "Filled in on this phone. Check the details.",
-  "type_it_failed": "We couldn't read that. Use the keypad instead.",
+  "type_it_failed": "I couldn't understand that. Try: got R350 from a piece job",
   "keypad_delete": "Delete last digit",
   "queued": "Saved on this phone — will sync when you're online.",
   "pending_sync": "{count} waiting to sync",
@@ -286,5 +286,16 @@
   "auth_signup_failed": "We couldn't create that account. If you already have one, sign in instead.",
   "auth_forgot": "Forgot your password? Email",
   "auth_terms_pre": "By creating an account you agree to our",
-  "privacy_link": "Privacy & Terms"
+  "privacy_link": "Privacy & Terms",
+  "err_typed_long": "That's too long. Keep it under 200 characters.",
+  "err_date_invalid": "Please choose a real date.",
+  "err_date_too_old": "Entries can go back to 1 January 2024.",
+  "err_date_too_far": "That's more than 7 days ahead. Please check the date.",
+  "err_scam_short": "Paste the whole message (at least 10 characters).",
+  "err_scam_long": "That's too long. Paste up to 2,000 characters.",
+  "err_scam_no_words": "Paste a message with words, not only emoji or symbols.",
+  "err_out_of_range": "Please check this number.",
+  "err_rate_limited": "Too many entries in a minute. Please wait and try again.",
+  "loan_ranges": "Amount R100 to R1,000,000 · interest 0–100% a month or 0–1,000% a year · term 1–360 months · fees R0 or more.",
+  "err_bill_day": "Choose a day from 1 to 31. A bill on the 31st is due on the last day of shorter months."
 }

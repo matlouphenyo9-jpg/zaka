@@ -40,8 +40,16 @@ export function parseRands(input: string): Result<number, AmountError> {
   return { ok: true, value: cents };
 }
 
-/** Zero-width, bidi-override and other invisible characters used to hide or reorder text. */
-const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F­؜ᅟᅠ᠎​-‏‪-‮⁠-⁤⁦-⁯ㅤ︀-️﻿ﾠ￹-￻]/g;
+/**
+ * Zero-width, bidi-override and other invisible characters used to hide or reorder text. Built from code points
+ * (not backslash escapes) so the source survives any copy/deploy step unchanged. Same set as clean_text_ok() in Postgres.
+ */
+const INVISIBLE_RANGES: [number, number][] = [
+  [0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x9f], [0xad, 0xad], [0x61c, 0x61c], [0x115f, 0x1160], [0x180e, 0x180e],
+  [0x200b, 0x200f], [0x202a, 0x202e], [0x2060, 0x2064], [0x2066, 0x206f], [0x3164, 0x3164], [0xfe00, 0xfe0f], [0xfeff, 0xfeff],
+  [0xffa0, 0xffa0], [0xfff9, 0xfffb],
+];
+const INVISIBLE = new RegExp(`[${INVISIBLE_RANGES.map(([a, z]) => `${String.fromCharCode(a)}-${String.fromCharCode(z)}`).join('')}]`, 'g');
 
 export function stripInvisible(s: string): string {
   return s.normalize('NFC').replace(INVISIBLE, '');
@@ -99,6 +107,26 @@ export function looksLikeMash(s: string): boolean {
   };
   const known = /\b(r?\d|got|paid|spent|bought|from|for|on|in|out|piece|job|grant|sassa|taxi|food|rent|ndi|ngi|ke|ek|het)\b/;
   return words.every(bad) && !known.test(s.toLowerCase());
+}
+
+/** Realistic ranges for everyday costs (cents), the same limits as essentials_ok() in Postgres. */
+export const ESSENTIAL_LIMITS: Record<string, number> = {
+  transport_daily_cents: 100_000, // R1,000 a day
+  fare_single_cents: 50_000, // R500 a trip
+  food_weekly_cents: 1_000_000, // R10,000 a week
+  electricity_weekly_cents: 500_000, // R5,000 a week
+  data_weekly_cents: 200_000, // R2,000 a week
+  trips_per_day: 10,
+};
+
+/** Names the first everyday-cost field that is outside its realistic range, or null. */
+export function essentialsError(e: Record<string, unknown>): string | null {
+  for (const [k, max] of Object.entries(ESSENTIAL_LIMITS)) {
+    const v = e[k];
+    if (v == null) continue;
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > max) return k;
+  }
+  return null;
 }
 
 /** A numeric range check for onboarding/price-book style fields; returns the parsed cents or an error. */

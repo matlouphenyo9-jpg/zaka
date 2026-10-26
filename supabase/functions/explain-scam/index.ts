@@ -2,12 +2,16 @@
 // The pasted message is untrusted data: it is fenced, never followed, never logged and never stored.
 import { z } from 'npm:zod@4.6.7';
 import { claudeJson, json, log, originAllowed, userFrom, withinLimit, corsHeaders, LOCALE_NAMES } from '../_shared/common.ts';
+import { checkMessage } from '../_shared/scam.ts';
+import { scamTextError, stripInvisible } from '../_shared/validate.ts';
 
 const FLAGS = ['otp_pin', 'upfront_fee', 'urgency', 'link', 'too_good', 'impersonation', 'new_number', 'personal_info', 'prompt_injection'] as const;
 const Input = z.object({
   text: z.string().min(1).max(2000),
-  flags: z.array(z.enum(FLAGS)).max(FLAGS.length),
-  level: z.enum(['high', 'medium', 'low']),
+  // Accepted for backwards compatibility but IGNORED: the server re-runs the rules itself (B4: a client must not be
+  // able to tell the model that a scam is "low risk").
+  flags: z.array(z.enum(FLAGS)).max(FLAGS.length).optional(),
+  level: z.enum(['high', 'medium', 'low']).optional(),
   locale: z.enum(['en', 'zu', 'xh', 'nso', 'af']).default('en'),
 });
 const Out = z.object({ summary: z.string().min(1).max(500), next_step: z.string().min(1).max(400) });
@@ -69,12 +73,17 @@ Deno.serve(async (req) => {
   } catch {
     return json(req, { ok: false, error: 'invalid_input' }, 400);
   }
+  // Bad input is refused before it costs an AI call or counts against the user's limit.
+  const text = stripInvisible(input.text).trim();
+  const bad = scamTextError(text);
+  if (bad) return json(req, { ok: false, error: bad }, 422);
   if (!(await withinLimit(userId, 'explain-scam', 20, 100))) return json(req, { ok: false, error: 'rate_limited' }, 429);
 
+  const rules = checkMessage(text);
   // Neutralise any attempt to close the fence from inside the message.
-  const fenced = input.text.replace(/<\/?\s*untrusted_message[^>]*>/gi, '[tag removed]');
-  const signs = input.flags.length ? input.flags.map((f) => `- ${FLAG_TEXT[f]}`).join('\n') : '- none of the common signs';
-  const user = `Our rule checker rated this message: ${input.level} risk.\nWarning signs it found:\n${signs}\n\n<untrusted_message>\n${fenced}\n</untrusted_message>`;
+  const fenced = text.replace(/<\/?\s*untrusted_message[^>]*>/gi, '[tag removed]');
+  const signs = rules.flags.length ? rules.flags.map((f) => `- ${FLAG_TEXT[f as (typeof FLAGS)[number]]}`).join('\n') : '- none of the common signs';
+  const user = `Our rule checker rated this message: ${rules.level} risk.\nWarning signs it found:\n${signs}\n\n<untrusted_message>\n${fenced}\n</untrusted_message>`;
 
   const raw = await claudeJson({ model: MODEL, system: system(LOCALE_NAMES[input.locale]), user, schema: SCHEMA, maxTokens: 4000 });
   const out = raw ? Out.safeParse(raw) : null;

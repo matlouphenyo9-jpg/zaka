@@ -19,8 +19,17 @@ const del = await c.rpc('delete_my_data');
 ok('demo cannot delete itself', !!del.error, del.error?.message);
 // entry cap: fresh seed, then insert until the cap
 await c.rpc('seed_demo', { p_user: uid });
-const rows = Array.from({ length: 60 }, () => ({ direction: 'out', amount_cents: 100, category: 'food', source: 'cash', occurred_on: new Date().toISOString().slice(0, 10) }));
-const bulk = await c.from('transactions').insert(rows);
+// The spam limit allows 30 new rows a minute, so the 60 come in two batches a minute apart.
+const rows = Array.from({ length: 30 }, () => ({ direction: 'out', amount_cents: 100, category: 'food', source: 'cash', occurred_on: new Date().toISOString().slice(0, 10) }));
+const first = await c.from('transactions').insert(rows[0]).select('id').single();
+ok('right after a demo reset, the judge can add an entry (seed rows do not count as spam)', !first.error, first.error?.code);
+if (first.data) await c.from('transactions').delete().eq('id', first.data.id);
+const burst = await c.from('transactions').insert([...rows, rows[0]]);
+ok('31 entries in one minute are throttled (spam limit)', burst.error?.code === '53400', burst.error?.code);
+const b1 = await c.from('transactions').insert(rows);
+await new Promise((r) => setTimeout(r, 61_000));
+const b2 = await c.from('transactions').insert(rows);
+const bulk = { error: b1.error ?? b2.error };
 ok('60 demo entries allowed', !bulk.error, bulk.error?.message);
 const over = await c.from('transactions').insert({ direction: 'out', amount_cents: 100, category: 'food', source: 'cash', occurred_on: new Date().toISOString().slice(0, 10) });
 ok('61st demo entry blocked', !!over.error, over.error?.message);
