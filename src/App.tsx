@@ -10,6 +10,7 @@ import { LanguageScreen } from './screens/Language';
 import { AuthScreen } from './screens/Auth';
 import { ConsentScreen } from './screens/Consent';
 import { NotFoundScreen, PrivacyScreen } from './screens/Privacy';
+import { LockScreen, usePinLock } from './components/PinLock';
 const OnboardingScreen = lazy(() => import('./screens/Onboarding').then((m) => ({ default: m.OnboardingScreen })));
 import { HomeScreen } from './screens/Home';
 const AddScreen = lazy(() => import('./screens/Add').then((m) => ({ default: m.AddScreen })));
@@ -30,6 +31,8 @@ function Splash() {
 export function App() {
   const { session, authReady, data, dataReady } = useStore();
   const { pathname } = useLocation();
+  const uid = session?.user.id ?? null;
+  const [locked, unlock] = usePinLock(uid);
   const [locale, setLoc] = useState<LocaleCode | null>(savedLocale());
 
   // A real account's saved language wins once signed in (it follows the user across devices). The shared demo
@@ -47,6 +50,7 @@ export function App() {
   if (!locale) return <LanguageScreen onDone={(c) => setLoc(c)} />;
   if (!authReady) return <Splash />;
   if (!session) return <AuthScreen />;
+  if (locked && uid) return <LockScreen uid={uid} onUnlock={unlock} />;
   if (!dataReady || !data.profile) return <Splash />;
   if (!data.profile.consent_at) return <ConsentScreen />;
   if (!data.profile.onboarded_at) return <Suspense fallback={<Splash />}><OnboardingScreen /></Suspense>;

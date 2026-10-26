@@ -330,5 +330,22 @@
   "feedback_limit": "You've sent feedback 3 times today. Thank you!",
   "feedback_failed": "We couldn't send that right now. Please try again later.",
   "share_zaka": "Share Zaka on WhatsApp",
-  "share_message": "I'm using Zaka to plan my money: it shows what's safe to spend until my next money comes in. Try it:"
+  "share_message": "I'm using Zaka to plan my money: it shows what's safe to spend until my next money comes in. Try it:",
+  "pin_section": "Security",
+  "pin_title": "Lock Zaka with a 4-digit PIN",
+  "pin_body": "For shared phones. Zaka asks for the PIN when it opens and after 5 minutes away. The PIN stays on this phone only.",
+  "pin_turn_on": "Set a PIN",
+  "pin_turn_off": "Turn off the PIN",
+  "pin_choose": "Choose a 4-digit PIN",
+  "pin_confirm": "Enter the same PIN again",
+  "pin_enter": "Enter your PIN",
+  "pin_weak": "That PIN is too easy to guess. Avoid 1234, 0000, 1212 and the like.",
+  "pin_mismatch": "The PINs did not match. Please start again.",
+  "pin_set": "PIN set. Zaka will ask for it on this phone.",
+  "pin_off_done": "PIN turned off.",
+  "pin_wrong": "Wrong PIN. Please try again.",
+  "pin_wait": "Too many wrong tries. Wait {n} seconds.",
+  "pin_wait_short": "Too many wrong tries. Please wait a moment.",
+  "pin_wiped": "Too many wrong tries. For your safety Zaka signed out and cleared this phone.",
+  "pin_forgot": "Forgot your PIN? Sign in again with your password"
 }

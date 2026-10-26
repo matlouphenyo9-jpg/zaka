@@ -9,6 +9,7 @@ import { centsToInput, formatRand, parseRandInput } from '../lib/money';
 import { weekdayFromIndex } from '../lib/format';
 import { BalanceCard } from '../components/Balance';
 import { FeedbackCard, ShareButton } from '../components/Feedback';
+import { PinSettings } from '../components/PinLock';
 import { Link } from 'react-router-dom';
 import { useForecast } from '../lib/useForecast';
 import { NAME_MAX, cleanName, essentialsError } from '../lib/validate';
@@ -165,6 +166,10 @@ export function MeScreen() {
           </Card>
         </Section>
       )}
+
+      <Section title={tu('pin_section')} icon="shield">
+        <PinSettings uid={session!.user.id} />
+      </Section>
 
       <section className="space-y-3">
         <FeedbackCard />
