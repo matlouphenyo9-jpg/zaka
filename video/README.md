@@ -1,6 +1,6 @@
 # Zaka demo video
 
-`docs/demo/zaka-demo.mp4`: 1920×1080, 30 fps, about 67 s, no voice. Every phone frame is a screenshot of the real app
+`docs/demo/zaka-demo.mp4`: 1920×1080, 30 fps, about 87 s, no voice. It opens with the slip scanner (B5), then the original story. Every phone frame is a screenshot of the real app
 (production build, live demo account, live AI) recorded by `capture.mjs` in isiXhosa: typing is captured
 character by character and scrolling frame by frame. Remotion only adds the phone frame, captions and tap ripples.
 
@@ -10,6 +10,7 @@ npm run build && npx vite preview --port 4173
 # then, in video/
 npm install
 npm run capture        # → public/rec/ (git-ignored) and src/rec.json (tap positions, frame marks)
+node capture-slip.mjs  # → public/rec/slip: the slip opening, on a freshly reset demo (run after capture)
 npm run render -- --browser-executable=/path/to/chrome-headless-shell
 ```
 

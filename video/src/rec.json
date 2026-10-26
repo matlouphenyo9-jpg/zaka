@@ -1,4 +1,48 @@
 {
+  "slip": {
+    "frames": 61,
+    "taps": [
+      {
+        "at": 1,
+        "x": 195,
+        "y": 679
+      },
+      {
+        "at": 2,
+        "x": 87,
+        "y": 728
+      },
+      {
+        "at": 30,
+        "x": 195,
+        "y": 640
+      },
+      {
+        "at": 31,
+        "x": 241,
+        "y": 581
+      }
+    ],
+    "marks": {
+      "home": 1,
+      "pick": 2,
+      "reading": 3,
+      "filled": 4,
+      "save": 30,
+      "saved": 31,
+      "tx": 32,
+      "txLines": 61
+    },
+    "home": {
+      "balance": "R561",
+      "safe": "R128"
+    },
+    "filled": {
+      "amount": "187.45"
+    },
+    "saved": "Igciniwe kwisilip sakho.\n\nUsuku lokunqongophala kwemali lutshintshile ukusuka ku-Mvu, Nov 2 ukuya ku-Mgq, Okt 31.\n\nImali ekhuselekileyo yokuchitha: R128 → R0\n\nEkhaya\nIintlawulo\nSkena esinye",
+    "lines": "Umsebenzi wethutyana: amaxesha ali-5 kule nyanga, R1 500 xa zizonke\nUkutya: amaxesha ali-4 kule nyanga, R862.45 xa zizonke\nEzothutho: amaxesha ali-15 kule nyanga, R738 xa zizonke\nIsibonelelo: kanye kule nyanga, R580 xa zizonke\nUmbane: amaxesha ali-4 kule nyanga, R390 xa zizonke\nIdatha ne-airtime: amaxesha ali-2 kule nyanga, R80 xa zizonke\nInjongo yokonga: amaxesha ali-2 kule nyanga, R80 xa zizonke"
+  },
   "pick": {
     "frames": 3,
     "taps": [

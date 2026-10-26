@@ -15,27 +15,54 @@ const typedLen = rec.type.marks.fill - 1; // frames 1..typedLen are one characte
 const saveAt = rec.type.marks.save;
 
 export const BEATS: Beat[] = [
+  // B5 opening: the newest way in, recorded separately on a freshly reset demo (capture-slip.mjs).
   {
-    step: '01', label: 'Language',
-    caption: 'Lerato picks isiXhosa.',
+    step: '01', label: 'Snap a slip',
+    caption: 'Snap or upload a slip.',
+    sub: 'The main button on Home: a photo, screenshot or PDF of a till slip, electricity, airtime or a payment.',
+    shots: [...hold('slip', 0, 75), ...hold('slip', 1, 45)],
+    zoom: { x: 195, y: 600, scale: 1.1 },
+  },
+  {
+    step: '02', label: 'Read by AI',
+    caption: 'A sample slip, read in seconds.',
+    sub: 'R187.45 at the spaza, groceries, 25 Oct – filled in for her to check. Nothing is saved until she taps Save.',
+    shots: [...hold('slip', 2, 30), ...hold('slip', 3, 95), ...run('slip', 4, 29), ...hold('slip', 29, 12)],
+  },
+  {
+    step: '03', label: 'Saved',
+    caption: 'The plan updates at once.',
+    sub: 'Safe to spend drops from R128 to R0 and the tight day moves to Saturday 31 Oct. The photo is read once, never kept.',
+    shots: [...hold('slip', 30, 120)],
+    zoom: { x: 195, y: 330, scale: 1.12 },
+  },
+  {
+    step: '04', label: 'Transactions',
+    caption: 'Every rand, by category.',
+    sub: '“Food: 4 times this month, R862.45 total.” Filter by dates, category, money in or out.',
+    shots: [...hold('slip', 31, 40), ...run('slip', 32, 60), ...hold('slip', 60, 130)],
+  },
+  {
+    step: '05', label: 'Language',
+    caption: 'From the start: Lerato picks isiXhosa.',
     sub: 'English plus four South African languages, all beta until native review.',
     shots: [...hold('pick', 0, 55), ...hold('pick', 1, 50), ...hold('pick', 2, 30)],
   },
   {
-    step: '02', label: 'Demo',
+    step: '06', label: 'Demo',
     caption: 'One tap: Try the demo.',
     sub: 'Ten weeks of synthetic history: a grant, piece jobs, a stokvel.',
     shots: [...hold('demo', 0, 40)],
   },
   {
-    step: '03', label: 'Safe to spend',
+    step: '07', label: 'Safe to spend',
     caption: 'R128 is safe until Wednesday.',
     sub: 'And a warning before it happens: Saturday looks tight.',
     shots: [...hold('demo', 1, 200)],
     zoom: { x: 195, y: 330, scale: 1.12 },
   },
   {
-    step: '04', label: 'Type it',
+    step: '08', label: 'Type it',
     caption: 'She types it in her own words.',
     sub: '“ndifumene i-R350 ngomsebenzi wethutyana” – AI fills the form, she checks it.',
     shots: [
@@ -48,20 +75,20 @@ export const BEATS: Beat[] = [
     ],
   },
   {
-    step: '05', label: 'The plan updates',
+    step: '09', label: 'The plan updates',
     caption: 'The tight day moves out six days.',
     sub: 'From Saturday 31 Oct to Friday 6 Nov. Safe to spend rises from R128 to R190.',
     shots: [...hold('type', saveAt, 170)],
     zoom: { x: 195, y: 250, scale: 1.12 },
   },
   {
-    step: '06', label: 'Why this estimate?',
+    step: '10', label: 'Why this estimate?',
     caption: 'Every rand, explained.',
     sub: 'Plain code on the phone does the maths – AI never sets the numbers.',
     shots: [...hold('why', 0, 40), ...hold('why', 1, 170)],
   },
   {
-    step: '07', label: 'Scam Shield',
+    step: '11', label: 'Scam Shield',
     caption: 'A fake SASSA message, caught.',
     sub: 'Warning signs found on the phone, explained in isiXhosa.',
     shots: [
@@ -75,7 +102,7 @@ export const BEATS: Beat[] = [
     ],
   },
   {
-    step: '08', label: 'Loan Check',
+    step: '12', label: 'Loan Check',
     caption: 'Above the legal maximum.',
     sub: 'Interest, initiation fee and service fee checked against the National Credit Regulations.',
     shots: [

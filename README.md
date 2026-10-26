@@ -6,7 +6,7 @@ Zaka is a cash-first money planner for South Africans whose income is uneven: SA
 
 - **Live app:** https://zaka.pages.dev (installable PWA; open it on a phone and "Add to Home screen")
 - **Demo:** tap **Try the demo (Lerato)** on the sign-in screen, or sign in with `demo@zaka.app` / `Zaka2026!demo`
-- **Demo video (67 s):** [docs/demo/zaka-demo.mp4](docs/demo/zaka-demo.mp4). Lerato picks isiXhosa, types a piece job, and checks a scam message and a loan. Every phone frame is recorded from the real app.
+- **Demo video (about 87 s):** [docs/demo/zaka-demo.mp4](docs/demo/zaka-demo.mp4). It opens with **Snap or upload a slip**: a sample spaza slip is read, checked, saved, and shows up in the Transactions summary. Then Lerato picks isiXhosa, types a piece job, and checks a scam message and a loan. Every phone frame is recorded from the real app.
 - Lerato is a synthetic person: 10 weeks of made-up grant, piece-job and spending history that is reloaded, ending today, each time "Try the demo" is tapped. The demo keeps the language you picked.
 
 ## Screenshots
