@@ -146,6 +146,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const uid = session?.user.id ?? null;
   const dataRef = useRef(data);
+  // False from the moment someone taps Log out: a refresh still in flight must not write their data back to the phone.
+  const storeLocally = useRef(true);
+  useEffect(() => {
+    if (uid) storeLocally.current = true;
+  }, [uid]);
   dataRef.current = data;
 
   // ---------------------------------------------------------------- auth
@@ -176,12 +181,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ---------------------------------------------------------------- local cache + queue
   const writeLocal = useCallback(async (next: AppData) => {
     setData(next);
-    if (uid) await set(cacheKey(uid), next).catch(() => undefined);
+    if (uid && storeLocally.current) await set(cacheKey(uid), next).catch(() => undefined);
   }, [uid]);
 
   const readQueue = useCallback(async (): Promise<QueuedOp[]> => (uid ? ((await get(queueKey(uid)).catch(() => null)) as QueuedOp[] | null) ?? [] : []), [uid]);
   const writeQueue = useCallback(async (q: QueuedOp[]) => {
-    if (!uid) return;
+    if (!uid || !storeLocally.current) return;
     await set(queueKey(uid), q).catch(() => undefined);
     setPending(q.filter((o) => o.table === 'transactions').length);
   }, [uid]);
@@ -390,12 +395,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(async () => {
     const { error } = await supabase.rpc('delete_my_data');
     if (error) throw error;
+    storeLocally.current = false;
     setData(EMPTY);
     await endSession();
   }, []);
 
   const signOut = useCallback(async () => {
     // Clear this phone's copy so the next person on a shared phone sees nothing, even if the network call fails.
+    storeLocally.current = false;
     setData(EMPTY);
     await endSession();
   }, []);
