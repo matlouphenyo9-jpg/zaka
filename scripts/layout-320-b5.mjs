@@ -18,6 +18,7 @@ for (const lang of ['en', 'zu', 'xh', 'nso', 'af']) {
     await p.goto(BASE + path);
     await p.waitForTimeout(900);
     const w = await p.evaluate(() => document.documentElement.scrollWidth);
+    if (path === '/scan' && lang === 'zu' && !(await p.getByText('Thatha noma ulayishe isiliphu').count())) { bad++; console.log('language not applied'); }
     n++;
     if (w > 320) { bad++; console.log(`OVERFLOW ${lang} ${path}: ${w}px`); }
   }

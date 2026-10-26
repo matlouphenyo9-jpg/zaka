@@ -10,10 +10,10 @@ const URL = 'https://dalhthsxuyttsgyigwgd.supabase.co';
 const KEY = 'sb_publishable_3gDDWCLElWvPr_9TYTD81A_DKSKG4Mr';
 const FN = `${URL}/functions/v1/scan-receipt`;
 const c = createClient(URL, KEY, { auth: { persistSession: false } });
-const { data } = await c.auth.signInWithPassword({ email: 'qa-owner@zaka-qa.test', password: process.env.QA_PASSWORD ?? 'QaTest!2026x' });
+const { data } = await c.auth.signInWithPassword({ email: process.env.SCAN_EMAIL ?? 'qa-owner@zaka-qa.test', password: process.env.QA_PASSWORD ?? 'QaTest!2026x' });
 const token0 = data.session.access_token;
 // Second account for the last calls: qa-owner has used its 10 scans for this hour by then (which is tested too).
-const other = (await createClient(URL, KEY, { auth: { persistSession: false } }).auth.signInWithPassword({ email: 'qa-other@zaka-qa.test', password: process.env.QA_PASSWORD ?? 'QaTest!2026x' })).data.session.access_token;
+const other = (await createClient(URL, KEY, { auth: { persistSession: false } }).auth.signInWithPassword({ email: process.env.SCAN_EMAIL2 ?? 'qa-other@zaka-qa.test', password: process.env.QA_PASSWORD ?? 'QaTest!2026x' })).data.session.access_token;
 let token = token0;
 
 let pass = 0, fail = 0;
