@@ -55,35 +55,32 @@ function Bars({ f }: { f: Forecast }) {
 function WhySheet({ f, open, onClose }: { f: Forecast; open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const { t: tu } = useTranslation('ui');
-  const horizonIncome = f.income.filter((e) => e.date <= f.horizon_date);
+  // Money arriving ON the horizon day ends the plan and is not counted in it (it must last until that money comes),
+  // so the detail list shows the same income as the breakdown above.
+  const horizonIncome = f.income.filter((e) => (f.horizon_reason === 'income' ? e.date < f.horizon_date : e.date <= f.horizon_date));
   const horizonCosts = f.costs.filter((c) => c.date <= f.horizon_date);
+  // Same whole-rand rounding as the breakdown above, so the two lists agree line by line.
+  const whole = (c: number) => formatRand(Math.round(c / 100) * 100);
   const essTotal = f.days.slice(0, f.horizon_days).reduce((s, d) => s + d.essentials_cents, 0);
   return (
     <Sheet open={open} onClose={onClose} title={t('why')}>
       <div className="space-y-4 text-base">
         <div className="rounded-xl2 border border-line bg-white px-4" data-testid="why-balance">
-          <div className="flex items-baseline justify-between gap-3 py-3">
-            <p className="font-bold text-ink">{tu('balance_now')}</p>
-            <span className="tabular text-lg font-bold">{formatRand(f.balance_cents)}</span>
-          </div>
-        </div>
-        <div className="rounded-xl2 border border-line bg-white px-4">
           <SafeBreakdownList f={f} />
         </div>
         <p className="text-ink-soft">{f.horizon_reason === 'income' && f.horizon_income ? tu('plan_horizon_income', { source: tu(`src_${f.horizon_income.source}`), date: shortDate(f.horizon_income.date) }) : tu('plan_horizon_cap')}</p>
         <div className="divide-y divide-line rounded-xl2 border border-line bg-white px-4">
-          <Row icon="opening_balance" title={tu('balance_now')} right={<span className="tabular font-semibold">{formatRand(f.balance_cents)}</span>} />
           {horizonIncome.map((e, i) => (
             <Row key={`i${i}`} icon={e.source === 'grant' ? 'grant' : 'piece_job'} tone="in" title={`${t('expected_money')}: ${tu(`src_${e.source}`)}`} sub={`${shortDate(e.date)} · ${formatRand(e.amount_cents)} · ${tu(`weight_${e.reliability}`)}`} right={<span className="tabular font-semibold text-teal-dark">+{formatEstimate(e.amount_cents * e.weight)}</span>} />
           ))}
           {horizonCosts.map((c, i) => (
             <Row key={`c${i}`} icon={c.category} title={c.name} sub={shortDate(c.date)} right={<span className="tabular font-semibold">−{formatRand(c.amount_cents)}</span>} />
           ))}
-          <Row icon="food" title={tu('plan_essentials')} sub={`${f.horizon_days} × ~${formatRand(Math.round(essTotal / Math.max(1, f.horizon_days)))}`} right={<span className="tabular font-semibold">−{formatEstimate(essTotal)}</span>} />
+          <Row icon="food" title={tu('plan_essentials')} sub={`${f.horizon_days} × ~${formatRand(Math.round(essTotal / Math.max(1, f.horizon_days)))}`} right={<span className="tabular font-semibold">−{whole(essTotal)}</span>} />
           <Row icon="plan" title={tu('plan_low_path_note').split('.')[0]} sub={shortDate(f.horizon_date)} right={<span className="tabular font-semibold">{formatEstimate(f.min_balance_cents)}</span>} />
           {f.reserve_cents > 0 && <Row icon="savings_goal" title={tu('plan_reserve')} right={<span className="tabular font-semibold">−{formatRand(f.reserve_cents)}</span>} />}
           {f.set_asides.map((a, i) => (
-            <Row key={`s${i}`} icon={a.kind === 'goal' ? 'savings_goal' : 'stokvel'} title={tu('plan_set_aside', { name: a.name })} sub={tu('per_day', { amount: formatEstimate(a.daily_cents) })} right={<span className="tabular font-semibold">−{formatEstimate(a.total_cents)}</span>} />
+            <Row key={`s${i}`} icon={a.kind === 'goal' ? 'savings_goal' : 'stokvel'} title={tu('plan_set_aside', { name: a.name })} sub={tu('per_day', { amount: formatEstimate(a.daily_cents) })} right={<span className="tabular font-semibold">−{whole(a.total_cents)}</span>} />
           ))}
           <Row icon="check" title={<strong>{tu('plan_result')}</strong>} sub={t('daily', { amount: formatEstimate(f.daily_cents) })} right={<strong className="tabular text-lg text-teal-dark">{formatEstimate(f.safe_cents)}</strong>} />
         </div>
