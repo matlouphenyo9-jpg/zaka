@@ -157,8 +157,11 @@ function Outro({ frame, fps }: { frame: number; fps: number }) {
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
       <div style={lift(a)}><Logo size={52} /></div>
-      <div style={{ ...lift(b), marginTop: 40, fontFamily: serif, fontStyle: 'italic', fontSize: 104, color: C.ink, letterSpacing: '-0.01em' }}>Every rand, with a plan.</div>
-      <div style={{ ...lift(c), marginTop: 36, fontFamily: inter, fontWeight: 600, fontSize: 38, color: C.teal }}>zaka.pages.dev</div>
+      <div style={{ ...lift(b), marginTop: 44, fontFamily: serif, fontSize: 84, color: C.ink, letterSpacing: '-0.01em' }}>
+        <span style={{ fontFamily: inter, fontWeight: 600, fontSize: 64, color: C.teal }}>zaka.pages.dev</span>
+        <span style={{ color: C.faint }}> · </span>
+        <span style={{ fontStyle: 'italic' }}>Every rand, with a plan.</span>
+      </div>
       <div style={{ ...lift(c), position: 'absolute', bottom: 70, fontFamily: inter, fontSize: 19, color: C.faint, letterSpacing: '0.02em' }}>
         JustIT Solutions · FNB App of the Year Hackathon 2026 · Demo data is synthetic
       </div>

@@ -1,64 +1,4 @@
 {
-  "slip": {
-    "frames": 61,
-    "taps": [
-      {
-        "at": 1,
-        "x": 195,
-        "y": 679
-      },
-      {
-        "at": 2,
-        "x": 87,
-        "y": 728
-      },
-      {
-        "at": 30,
-        "x": 195,
-        "y": 640
-      },
-      {
-        "at": 31,
-        "x": 241,
-        "y": 581
-      }
-    ],
-    "marks": {
-      "home": 1,
-      "pick": 2,
-      "reading": 3,
-      "filled": 4,
-      "save": 30,
-      "saved": 31,
-      "tx": 32,
-      "txLines": 61
-    },
-    "home": {
-      "balance": "R561",
-      "safe": "R128"
-    },
-    "filled": {
-      "amount": "187.45"
-    },
-    "saved": "Igciniwe kwisilip sakho.\n\nUsuku lokunqongophala kwemali lutshintshile ukusuka ku-Mvu, Nov 2 ukuya ku-Mgq, Okt 31.\n\nImali ekhuselekileyo yokuchitha: R128 → R0\n\nEkhaya\nIintlawulo\nSkena esinye",
-    "lines": "Umsebenzi wethutyana: amaxesha ali-5 kule nyanga, R1 500 xa zizonke\nUkutya: amaxesha ali-4 kule nyanga, R862.45 xa zizonke\nEzothutho: amaxesha ali-15 kule nyanga, R738 xa zizonke\nIsibonelelo: kanye kule nyanga, R580 xa zizonke\nUmbane: amaxesha ali-4 kule nyanga, R390 xa zizonke\nIdatha ne-airtime: amaxesha ali-2 kule nyanga, R80 xa zizonke\nInjongo yokonga: amaxesha ali-2 kule nyanga, R80 xa zizonke"
-  },
-  "pick": {
-    "frames": 3,
-    "taps": [
-      {
-        "at": 1,
-        "x": 74,
-        "y": 406
-      },
-      {
-        "at": 2,
-        "x": 195,
-        "y": 788
-      }
-    ],
-    "marks": {}
-  },
   "demo": {
     "frames": 2,
     "taps": [
@@ -71,41 +11,99 @@
     "marks": {},
     "home": {
       "safe": "R128",
-      "shortfall": "Imali ingaphela ngo-Mgq, Okt 31."
+      "balance": "R561",
+      "shortfall": "Money may run short on Mon, 02 Nov."
+    }
+  },
+  "slip": {
+    "frames": 56,
+    "taps": [
+      {
+        "at": 0,
+        "x": 195,
+        "y": 465
+      },
+      {
+        "at": 1,
+        "x": 87,
+        "y": 500
+      },
+      {
+        "at": 27,
+        "x": 195,
+        "y": 664
+      },
+      {
+        "at": 28,
+        "x": 244,
+        "y": 348
+      }
+    ],
+    "marks": {
+      "save": 27,
+      "tx": 28
+    },
+    "filled": {
+      "amount": "187.45"
+    },
+    "saved": "Saved from your slip.\n\nYour tight day moved from Mon, 02 Nov to Sat, 31 Oct.\n\nSafe to spend: R128 → R0\n\nHome\nTransactions\nScan another",
+    "lines": "Piece job: 5 times this month, R1 500 total\nFood: 4 times this month, R862.45 total\nTransport: 15 times this month, R738 total\nGrant: once this month, R580 total\nElectricity: 4 times this month, R390 total\nData & airtime: 2 times this month, R80 total\nSavings goal: 2 times this month, R80 total",
+    "totals": {
+      "in": "+R2 080",
+      "out": "−R2 150.45"
+    }
+  },
+  "home": {
+    "frames": 22,
+    "taps": [
+      {
+        "at": 0,
+        "x": 39,
+        "y": 812
+      }
+    ],
+    "marks": {
+      "warn": 22
+    },
+    "now": {
+      "safe": "R0",
+      "balance": "R373.55",
+      "shortfall": "Money may run short on Sat, 31 Oct."
     }
   },
   "type": {
-    "frames": 61,
+    "frames": 47,
     "taps": [
       {
         "at": 0,
         "x": 117,
-        "y": 810
+        "y": 812
       },
       {
         "at": 1,
-        "x": 112,
-        "y": 368
+        "x": 125,
+        "y": 247
       },
       {
-        "at": 40,
-        "x": 274,
-        "y": 368
+        "at": 26,
+        "x": 287,
+        "y": 247
       },
       {
-        "at": 60,
+        "at": 46,
         "x": 195,
         "y": 528
       }
     ],
     "marks": {
-      "fill": 40,
-      "save": 60
+      "fill": 26,
+      "save": 46
     },
     "filled": {
       "amount": "R350\n1\n2\n3\n4\n5\n6\n7\n8\n9\n"
     },
-    "impact": "Usuku lokunqongophala kwemali lutshintshile ukusuka ku-Mgq, Okt 31 ukuya ku-Hla, Nov 6.\n\nImali ekhuselekileyo yokuchitha: R128 → R190\n\nEkhaya →\nBuyisela"
+    "impact": "Your tight day moved from Sat, 31 Oct to Tue, 03 Nov.\n\nSafe to spend: R0 → R17\n\nHome →\nUndo",
+    "sentence": "got R350 from a piece job"
   },
   "why": {
     "frames": 2,
@@ -113,12 +111,12 @@
       {
         "at": 0,
         "x": 195,
-        "y": 811
+        "y": 812
       },
       {
         "at": 1,
         "x": 195,
-        "y": 675
+        "y": 470
       }
     ],
     "marks": {}
@@ -129,12 +127,12 @@
       {
         "at": 0,
         "x": 273,
-        "y": 810
+        "y": 812
       },
       {
         "at": 1,
-        "x": 113,
-        "y": 734
+        "x": 265,
+        "y": 612
       }
     ],
     "marks": {}
@@ -145,12 +143,43 @@
       {
         "at": 1,
         "x": 282,
-        "y": 292
+        "y": 128
       },
       {
         "at": 26,
         "x": 195,
-        "y": 488
+        "y": 489
+      }
+    ],
+    "marks": {}
+  },
+  "lang": {
+    "frames": 5,
+    "taps": [
+      {
+        "at": 0,
+        "x": 351,
+        "y": 812
+      },
+      {
+        "at": 1,
+        "x": 172,
+        "y": 272
+      },
+      {
+        "at": 2,
+        "x": 39,
+        "y": 812
+      },
+      {
+        "at": 3,
+        "x": 351,
+        "y": 812
+      },
+      {
+        "at": 4,
+        "x": 75,
+        "y": 165
       }
     ],
     "marks": {}

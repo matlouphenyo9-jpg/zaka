@@ -1,4 +1,5 @@
-// Records the demo story from the real app (isiXhosa) as PNG frame sequences + tap coordinates for the Remotion video.
+// Records the whole demo story from the real app in English, on one freshly reset demo account, as PNG frame
+// sequences + tap coordinates + the numbers shown on screen (for the captions) for the Remotion video.
 // Needs a running build (npx vite preview --port 4173) and network access to Supabase (live demo account + AI).
 //   node video/capture.mjs [baseUrl]   → video/public/rec/<scene>/NNN.png and video/src/rec.json
 import { createRequire } from 'node:module';
@@ -9,11 +10,12 @@ const { chromium } = require('playwright');
 const BASE = process.argv[2] ?? 'http://localhost:4173';
 const ROOT = new URL('./public/rec/', import.meta.url).pathname;
 const i18n = (f) => JSON.parse(readFileSync(new URL(`../src/i18n/${f}`, import.meta.url), 'utf8'));
-const xh = { ...i18n('xh.json'), ...i18n('ui.xh.json') };
+const en = { ...i18n('en.json'), ...i18n('ui.en.json') };
 const t = (k) => {
-  if (!xh[k]) throw new Error(`missing xh string ${k}`);
-  return xh[k];
+  if (!en[k]) throw new Error(`missing en string ${k}`);
+  return en[k];
 };
+const text = (sel) => p.locator(sel).first().innerText();
 
 rmSync(ROOT, { recursive: true, force: true });
 const browser = await chromium.launch();
@@ -61,39 +63,72 @@ const scrollFrames = async (target, count) => {
 const yOf = (loc) => loc.first().evaluate((el) => el.getBoundingClientRect().top + window.scrollY - 84);
 const aiDone = () => p.waitForFunction((s) => !document.body.innerText.includes(s), t('scam_explaining'), { timeout: 45000 });
 
-// 1. Pick isiXhosa
-start('pick');
-await p.goto(BASE);
-await p.getByText('isiXhosa', { exact: true }).waitFor();
-await settle();
-await frame();
-await tap(p.getByText('isiXhosa', { exact: true }));
-await settle(400);
-await frame();
-await tap(p.getByRole('button', { name: t('continue') }));
-await settle();
-await frame(); // sign-in screen, in isiXhosa
-
-// 2. Try the demo
+// 1. English, then Try the demo (this resets Lerato's data: everything below is one fresh demo)
 start('demo');
-await frame();
+await p.goto(BASE);
+await p.getByText('English', { exact: true }).waitFor();
+await p.getByText('English', { exact: true }).click();
+await p.getByRole('button', { name: t('continue') }).click();
+await settle();
+await frame(); // 0: sign-in screen with Try the demo
 await tap(p.locator('button:has(.bg-gold)'));
-await p.waitForSelector('[data-testid=safe-amount]', { timeout: 30000 });
+await p.waitForSelector('[data-testid=home-scan]', { timeout: 30000 });
 await p.waitForSelector('[data-testid=shortfall]');
 await settle(1500);
+await frame(); // 1: Home before the slip
+meta.demo.home = { safe: await text('[data-testid=safe-amount]'), balance: await text('[data-testid=balance-now]'), shortfall: await text('[data-testid=shortfall]') };
+
+// 2. Snap a slip: sample spaza slip → filled form → saved → Transactions summary
+start('slip');
+await tap(p.getByTestId('home-scan'));
+await settle();
+await frame(); // 0: Snap or upload a slip, with the samples
+await tap(p.getByTestId('sample-spaza'));
+await p.waitForTimeout(250);
+await frame(); // 1: reading…
+await p.waitForSelector('[data-testid=scan-check]', { timeout: 60000 });
+await settle(500);
+await frame(); // 2: filled form
+meta.slip.filled = { amount: await p.getByTestId('scan-amount-0').inputValue() };
+await scrollFrames(await yOf(p.getByTestId('scan-save')) - 520, 24);
+mark('save');
+await tap(p.getByTestId('scan-save'));
+await p.waitForSelector('[data-testid=scan-saved]');
+await p.waitForTimeout(1200);
+await frame(); // saved card
+meta.slip.saved = await p.getByTestId('scan-saved').locator('xpath=..').innerText();
+mark('tx');
+await tap(p.getByRole('button', { name: t('tx_title') }));
+await p.waitForSelector('[data-testid=tx-lines]');
+await settle(800);
 await frame();
-meta.demo.home = {
-  safe: await p.locator('[data-testid=safe-amount]').innerText(),
-  shortfall: await p.locator('[data-testid=shortfall]').innerText(),
-};
+await scrollFrames(await yOf(p.getByTestId('tx-lines')) - 200, 26);
+await settle(300);
+await frame();
+meta.slip.lines = await p.getByTestId('tx-lines').innerText();
+meta.slip.totals = { in: await text('[data-testid=tx-in]'), out: await text('[data-testid=tx-out]') };
+
+// 3. Home after the slip: safe to spend, Money you have now, the tight-day warning
+start('home');
+await tap(tabs.nth(0));
+await p.waitForSelector('[data-testid=safe-amount]');
+await p.evaluate(() => window.scrollTo(0, 0));
+await settle(1200);
+await frame(); // 0: safe to spend
+meta.home.now = { safe: await text('[data-testid=safe-amount]'), balance: await text('[data-testid=balance-now]'), shortfall: await p.locator('[data-testid=shortfall]').innerText().catch(() => null) };
+await scrollFrames(await yOf(p.getByTestId('balance-now')) - 160, 20);
+await settle(300);
+await frame(); // Money you have now + tight-day warning
+mark('warn');
 
 // 3. Type the piece job, let AI fill the form, save
 start('type');
 await tap(tabs.nth(1));
+await p.evaluate(() => window.scrollTo(0, 0));
 await settle();
 await frame();
 const input = p.getByPlaceholder(t('type_it_hint'));
-const sentence = t('type_it_hint').replace(/^umz\.\s*/, ''); // the app's own example sentence
+const sentence = t('type_it_hint').replace(/^e\.g\.\s*/, ''); // the app's own example sentence
 await tap(input);
 for (const ch of sentence) {
   await input.press(ch === ' ' ? 'Space' : ch);
@@ -114,6 +149,7 @@ await p.waitForFunction(() => !document.querySelector('[role=status]'), null, { 
 await p.waitForTimeout(3200);
 await frame();
 meta.type.impact = await p.locator('main .bg-teal-soft, main [class*=teal]').first().innerText().catch(() => '');
+meta.type.sentence = sentence;
 
 // 4. Plan and Why this estimate?
 start('why');
@@ -173,7 +209,27 @@ await scrollFrames(await yOf(p.getByTestId('loan-total')) - 24, 30);
 await settle(300);
 await frame();
 
+// 7. Also in four more languages: Me → Language → isiZulu, Home in isiZulu, then back to English
+start('lang');
+await tap(tabs.nth(4));
+await p.evaluate(() => window.scrollTo(0, 0));
+await settle(800);
+await frame(); // 0: Me with Language
+await tap(p.getByRole('button', { name: /isiZulu/ }));
+await settle(900);
+await frame(); // 1: Me in isiZulu
+await tap(tabs.nth(0));
+await p.waitForSelector('[data-testid=safe-amount]');
+await settle(1000);
+await frame(); // 2: Home in isiZulu
+await tap(tabs.nth(4));
+await settle(700);
+await frame(); // 3: Me in isiZulu
+await tap(p.getByRole('button', { name: /^English/ }));
+await settle(900);
+await frame(); // 4: back in English
+
 writeFileSync(new URL('./src/rec.json', import.meta.url), JSON.stringify(meta, null, 2) + '\n');
-console.log(JSON.stringify(Object.fromEntries(Object.entries(meta).map(([k, v]) => [k, { frames: v.frames, taps: v.taps.length, ...('home' in v ? { home: v.home } : {}), ...('impact' in v ? { impact: v.impact } : {}) }])), null, 1));
+console.log(JSON.stringify(Object.fromEntries(Object.entries(meta).map(([k, { taps, ...rest }]) => [k, { ...rest, taps: taps.length }])), null, 1));
 console.log('page errors:', errors.length ? errors : 'none');
 await browser.close();
