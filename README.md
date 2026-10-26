@@ -91,7 +91,7 @@ Every account, entry, bill and goal is stored in Postgres (Supabase) behind Row 
 
 ## Authentication
 
-- **Generic errors**: any failed sign-in says "Email or password is incorrect", so nobody can find out which emails have accounts; sign-up errors never confirm an existing account.
+- **Generic errors**: any failed sign-in says "Email or password is incorrect", so nobody can find out which emails have accounts; sign-up shows the same message for a new and an existing email.
 - **Cool-down**: after 5 failed sign-ins the form waits 30 seconds (doubling up to 8 minutes), and a page refresh doesn't reset it. Supabase's own server-side rate limits stay on.
 - **Strong passwords**: at least 8 characters with a letter and a number, shown as a live checklist.
 - **Email** is trimmed, lower-cased and format-checked (no spaces, ≤254 characters). Password reset is not offered by email; the sign-in screen points to support@jis-tech.co.za.
@@ -118,17 +118,19 @@ Every rule holds **on the phone, in the Edge Functions and in the database**, so
 - **Edge Functions** need a signed-in user, check the origin, validate input and apply per-user limits (parse: 30 an hour / 200 a day; explain: 20 an hour / 100 a day) plus a project-wide daily AI budget. Logs contain no message text or personal data.
 - **Demo lock-down**: the shared demo account's email and password can't be changed and it can't be deleted; its data is capped (60 entries, 15 bills, 15 goals, 100 scam checks); only it may be reset, at most every 15 seconds; clients can't fake "seed" rows to slip past the cap. Sign-ups are throttled to 60 an hour.
 - **Web headers**: strict Content-Security-Policy, HSTS, no framing, no sniffing.
+- **Shared demo AI allowance**: on the demo account each network (a hashed, daily-salted IP; nothing reversible is stored) gets a small share of the AI calls, plus a cap for the whole account, so one person can't use up every judge's allowance.
 - **Secrets** (`ANTHROPIC_API_KEY`) live only in Supabase, never in this repository.
 
 ## Test results
 
 | Check | Result | How |
 | --- | --- | --- |
-| Unit tests (forecast, balance breakdown, validators, auth rules, PIN, loan, dates…) | 132/132 | `npm test` |
-| Attacks through the API with the public key (bad amounts, text, dates, enums, other users' IDs, fake seed rows, spam, demo abuse, Edge Function input) | 97/97 | `npm run test:attack` |
+| Unit tests (forecast, balance breakdown, validators, auth rules, PIN, loan, dates…) | 134/134 | `npm test` |
+| Attacks through the API with the public key (bad amounts, text, dates, enums, other users' IDs, fake seed rows, spam, demo abuse, feedback, car km/litres, Edge Function input) | 113/113 | `npm run test:attack` |
 | Row Level Security and API abuse | 31/31 | `npm run test:rls` |
 | Prompt injection | 15/15 | `npm run test:injection` |
 | Demo account protections | 11/11 | `npm run test:demo` |
+| Shared demo AI allowance (one person can't use up everyone's) | 2/2 | `npm run test:demo-ai` |
 | Strict-judge browser pass (demo in 3 languages, entries, Type it, Plan, Scam Shield ×3, Loan Check, refresh, new account, log out wipe) | 17/17 | `npm run test:qa` |
 | AI in all 5 languages | 13/13 | `npm run test:ai` |
 | Translation key and placeholder parity | OK | `npm run check:i18n` |
