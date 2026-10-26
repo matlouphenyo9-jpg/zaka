@@ -93,3 +93,6 @@ create or replace trigger limit_feedback before insert on public.feedback for ea
 --   select count(*) as feedback, round(avg(rating), 2) as avg_stars, count(*) filter (where may_quote) as quotable from public.feedback;
 --   select comment, rating, locale, created_at from public.feedback where may_quote and comment is not null order by created_at desc;
 --   select count(*) as real_signups from auth.users where email <> 'demo@zaka.app' and email not like '%@zaka-qa.test';
+
+-- B4-E cleanup: delete the QA accounts used for today's live tests (their rows cascade). Run LAST.
+delete from auth.users where email in ('qa-owner@zaka-qa.test', 'qa-other@zaka-qa.test', 'qa-new@zaka-qa.test');
