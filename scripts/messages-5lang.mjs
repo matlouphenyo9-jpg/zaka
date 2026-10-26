@@ -4,6 +4,8 @@
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
+const ui = (l) => JSON.parse(readFileSync(new URL(`../src/i18n/ui.${l}.json`, import.meta.url), 'utf8'));
 const { chromium } = createRequire(import.meta.url)('playwright');
 const BASE = process.argv[2] ?? 'http://localhost:4173';
 const b = await chromium.launch();
@@ -42,7 +44,7 @@ for (const lang of ['en', 'zu', 'xh', 'nso', 'af']) {
   await p.goto(`${BASE}/add`);
   await p.locator('#typeit').fill('asdkjhqwe zxcvbnm');
   await p.locator('#typeit').press('Enter');
-  const typed = p.locator('#typeit').locator('xpath=ancestor::div[contains(@class,"rounded")][1]//p[contains(@class,"text-risk")]');
+  const typed = p.locator('main p.text-risk').first();
   await typed.waitFor({ timeout: 10000 });
   check(lang, 'Type it gibberish', await typed.innerText(), await p.evaluate(() => document.documentElement.scrollWidth));
   // Slip: a text file is refused on the phone
@@ -61,7 +63,7 @@ for (const lang of ['en', 'zu', 'xh', 'nso', 'af']) {
   // Transactions: empty filter
   await p.goto(`${BASE}/transactions`);
   await p.waitForSelector('[data-testid=tx-lines], main');
-  await p.locator('main button').filter({ hasText: /./ }).nth(4).click(); // "Pick dates"
+  await p.getByRole('button', { name: ui(lang).tx_range_custom, exact: true }).click(); // "Pick dates"
   const dates = p.locator('main input[type=date]');
   await dates.nth(0).fill('2024-01-01');
   await dates.nth(1).fill('2024-01-02');

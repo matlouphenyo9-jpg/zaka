@@ -132,12 +132,14 @@ Every rule holds **on the phone, in the Edge Functions and in the database**, so
 
 | Check | Result | How |
 | --- | --- | --- |
-| Unit tests (forecast, balance breakdown, validators, auth rules, PIN, loan, dates, slip rules, Transactions filters…) | 158/158 | `npm test` |
+| Unit tests (forecast, balance breakdown, validators, auth rules, PIN, loan, dates, slip rules, Transactions filters…) | 167/167 | `npm test` |
 | Attacks through the API with the public key (bad amounts, text, dates, enums, other users' IDs, fake seed rows, spam, demo abuse, feedback, car km/litres, Edge Function input) | 113/113 | `npm run test:attack` |
 | Row Level Security and API abuse | 31/31 | `npm run test:rls` |
 | Prompt injection | 15/15 | `npm run test:injection` |
 | Demo account protections | 11/11 | `npm run test:demo` |
 | Shared demo AI allowance (one person can't use up everyone's) | 2/2 | `npm run test:demo-ai` |
+| B6 audit, live: 25 simultaneous scans can't beat the hourly limit, demo can't be renamed, trigger functions and the limit counter aren't callable, crafted 3 MB PDF refused fast | 7/7 | `npm run test:audit` |
+| Error, warning and empty-state messages in all 5 languages at 320 px (wrong password, Type it gibberish, not a photo, Scam Shield too short, empty Transactions) | 25/25 | `npm run test:messages` |
 | Slip scanning, live: 3 sample slips, taxi ticket, payslip, PDF slip, 2-row PDF, injection slip and PDF, selfie, black photo, renamed .exe/HTML, 1.6 MB and 10 MB uploads, encrypted and 20-page PDFs, no sign-in, hourly limit | 22/22 | `npm run test:scan` |
 | Slip flow in the browser: Home button, sample slip read and filled, saved, "Money you have now" and safe to spend change, Transactions badge, summary and filter | 11/11 | `npm run screenshots:b5` |
 | Strict-judge browser pass (demo in 3 languages, entries, Type it, Plan, Scam Shield ×3, Loan Check, refresh, new account, log out wipe) | 17/17 | `npm run test:qa` |
