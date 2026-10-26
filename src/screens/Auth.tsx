@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { SUPPORT_EMAIL, authErrorKey, checkPassword, clearFailures, cooldownLeft, normaliseEmail, recordFailure } from '../lib/authRules';
-import { DEMO_EMAIL, DEMO_PASSWORD, supabase } from '../lib/supabase';
+import { SUPPORT_EMAIL, authErrorKey, checkPassword, clearFailures, cooldownLeft, normaliseEmail, recordFailure, signupMessageKey } from '../lib/authRules';
+import { createClient } from '@supabase/supabase-js';
+import { DEMO_EMAIL, DEMO_PASSWORD, SUPABASE_KEY, SUPABASE_URL, supabase } from '../lib/supabase';
 import { DEMO_RESEED_KEY } from '../lib/store';
 import { Button, Field } from '../components/ui';
 import { Logo } from '../components/Logo';
@@ -44,9 +45,15 @@ export function AuthScreen() {
           setMsg({ tone: 'error', text: t(authErrorKey(error, 'signin')) });
         } else clearFailures();
       } else {
-        const { data, error } = await supabase.auth.signUp({ email: cleanEmail, password });
-        if (error) setMsg({ tone: 'error', text: t(authErrorKey(error, 'signup')) });
-        else if (!data.session) setMsg({ tone: 'info', text: t('auth_check_email') });
+        // Sign up on a separate client that keeps no session, so a new and an existing email look exactly the same:
+        // one message, then the person signs in (where any failure is "Email or password is incorrect").
+        const signupClient = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+        const { error } = await signupClient.auth.signUp({ email: cleanEmail, password });
+        const key = signupMessageKey(error);
+        if (key === 'auth_signup_done') {
+          setMode('signin');
+          setMsg({ tone: 'info', text: t(key) });
+        } else setMsg({ tone: 'error', text: t(key) });
       }
     } finally {
       setBusy(false);

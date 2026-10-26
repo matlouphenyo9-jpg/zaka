@@ -70,6 +70,16 @@ export function clearFailures() {
   }
 }
 
+/**
+ * Sign-up never says whether an email already has an account: a new account and an existing one get the same
+ * message. Only answers that reveal nothing about accounts (weak password, too many tries) are shown as such.
+ */
+export function signupMessageKey(err: { status?: number; code?: string; message?: string } | null): string {
+  if (!err) return 'auth_signup_done';
+  const key = authErrorKey(err, 'signup');
+  return key === 'auth_password_rule' || key === 'auth_rate_limited' ? key : 'auth_signup_done';
+}
+
 /** Maps a Supabase auth error to a message key that never reveals whether an email is registered. */
 export function authErrorKey(err: { status?: number; code?: string; message?: string }, mode: 'signin' | 'signup'): string {
   const code = err.code ?? '';

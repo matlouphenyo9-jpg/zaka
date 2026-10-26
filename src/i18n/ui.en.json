@@ -347,5 +347,6 @@
   "pin_wait": "Too many wrong tries. Wait {n} seconds.",
   "pin_wait_short": "Too many wrong tries. Please wait a moment.",
   "pin_wiped": "Too many wrong tries. For your safety Zaka signed out and cleared this phone.",
-  "pin_forgot": "Forgot your PIN? Sign in again with your password"
+  "pin_forgot": "Forgot your PIN? Sign in again with your password",
+  "auth_signup_done": "Done. If this email is new, your account is ready (check your email if we ask you to confirm). If you already have an account, use its password. Tap Sign in to continue."
 }

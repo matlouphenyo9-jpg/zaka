@@ -44,21 +44,62 @@ export async function userFrom(req: Request): Promise<string | null> {
 /** Project-wide daily AI budget per function: caps cost even if someone farms many accounts. */
 const GLOBAL_PER_DAY: Record<string, number> = { 'parse-entry': 3000, 'explain-scam': 600 };
 
+/**
+ * The shared judge account's allowance, per network and for the whole account, per function. A network may take at
+ * most about a quarter of the account's daily allowance, so one person can't use up everyone's; the per-network
+ * numbers are generous enough for several judges sharing one venue Wi-Fi.
+ */
+const DEMO_LIMITS: Record<string, { perHour: number; perDay: number; accountPerDay: number }> = {
+  'parse-entry': { perHour: 30, perDay: 80, accountPerDay: 400 },
+  'explain-scam': { perHour: 15, perDay: 40, accountPerDay: 150 },
+};
+
+/**
+ * Identifies a person on the shared demo account without storing who they are: a SHA-256 of the network address,
+ * salted with the project and today's date, so it can't be reversed or linked across days.
+ */
+async function clientKey(req: Request): Promise<string> {
+  const ip = (req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown').trim();
+  const day = new Date().toISOString().slice(0, 10);
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${url}|${day}|${ip}`)));
+  return Array.from(bytes.slice(0, 16), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const count = (q: PromiseLike<{ count: number | null }>) => Promise.resolve(q).then((r) => r.count ?? 0);
+
 /** Counts this call and says whether the user (and the whole project) is within the limits. */
-export async function withinLimit(userId: string, fn: string, perHour: number, perDay: number): Promise<boolean> {
+export async function withinLimit(userId: string, fn: string, perHour: number, perDay: number, req?: Request): Promise<boolean> {
   const hourAgo = new Date(Date.now() - 3600_000).toISOString();
   const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-  const [h, d, g] = await Promise.all([
-    admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('fn', fn).gte('created_at', hourAgo),
-    admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('fn', fn).gte('created_at', dayAgo),
-    admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('fn', fn).gte('created_at', dayAgo),
-  ]);
-  if ((h.count ?? 0) >= perHour || (d.count ?? 0) >= perDay) return false;
-  if ((g.count ?? 0) >= (GLOBAL_PER_DAY[fn] ?? 1000)) {
+  const usage = () => admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('fn', fn);
+  const { data: prof } = await admin.from('profiles').select('is_demo').eq('user_id', userId).maybeSingle();
+  const demo = !!prof?.is_demo && !!DEMO_LIMITS[fn];
+  let client: string | null = null;
+  if (demo && req) {
+    // Shared judge account: each person gets a small allowance, so one person can't use up everyone's.
+    const lim = DEMO_LIMITS[fn];
+    client = await clientKey(req);
+    const [ch, cd, acct] = await Promise.all([
+      count(usage().eq('user_id', userId).eq('client', client).gte('created_at', hourAgo)),
+      count(usage().eq('user_id', userId).eq('client', client).gte('created_at', dayAgo)),
+      count(usage().eq('user_id', userId).gte('created_at', dayAgo)),
+    ]);
+    if (ch >= lim.perHour || cd >= lim.perDay || acct >= lim.accountPerDay) {
+      log(fn, 'demo_limit');
+      return false;
+    }
+  } else {
+    const [h, d] = await Promise.all([
+      count(usage().eq('user_id', userId).gte('created_at', hourAgo)),
+      count(usage().eq('user_id', userId).gte('created_at', dayAgo)),
+    ]);
+    if (h >= perHour || d >= perDay) return false;
+  }
+  if ((await count(usage().gte('created_at', dayAgo))) >= (GLOBAL_PER_DAY[fn] ?? 1000)) {
     log(fn, 'global_budget_reached');
     return false;
   }
-  await admin.from('ai_usage').insert({ user_id: userId, fn });
+  await admin.from('ai_usage').insert({ user_id: userId, fn, client });
   return true;
 }
 

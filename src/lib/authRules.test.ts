@@ -38,6 +38,20 @@ describe('login cool-down', () => {
   });
 });
 
+describe('sign-up gives the same answer for a new and an existing email', () => {
+  it('new account and existing account → the same message', async () => {
+    const { signupMessageKey } = await import('./authRules');
+    expect(signupMessageKey(null)).toBe('auth_signup_done');
+    expect(signupMessageKey({ status: 422, code: 'user_already_exists', message: 'User already registered' })).toBe('auth_signup_done');
+    expect(signupMessageKey({ status: 400, code: 'email_exists' })).toBe('auth_signup_done');
+  });
+  it('still explains a weak password or too many tries (they reveal nothing about accounts)', async () => {
+    const { signupMessageKey } = await import('./authRules');
+    expect(signupMessageKey({ status: 422, code: 'weak_password' })).toBe('auth_password_rule');
+    expect(signupMessageKey({ status: 429 })).toBe('auth_rate_limited');
+  });
+});
+
 describe('auth errors never reveal whether an email exists', () => {
   it('sign-in: wrong password and unknown email give the same message', () => {
     expect(authErrorKey({ status: 400, code: 'invalid_credentials', message: 'Invalid login credentials' }, 'signin')).toBe('auth_error');

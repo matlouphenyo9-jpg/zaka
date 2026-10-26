@@ -25,6 +25,8 @@ const refused = async (name, q, code) => {
 };
 const ins = (row) => a.from('transactions').insert(txn(row)).select('id').single();
 
+// The spam counter remembers the last minute of writes (even deleted ones): start from a quiet minute.
+await new Promise((r) => setTimeout(r, 61_000));
 await a.from('transactions').delete().eq('user_id', me);
 await a.from('obligations').delete().eq('user_id', me);
 await a.from('goals').delete().eq('user_id', me);
@@ -98,13 +100,44 @@ const seedSelf = await a.rpc('seed_demo', { p_user: me });
 ok('seed_demo on a normal account is refused (demo only)', !!seedSelf.error, seedSelf.error?.code);
 const guardCall = await a.rpc('seed_demo_guard', { p_user: me });
 ok('internal seed_demo_guard is not callable', !!guardCall.error, guardCall.error?.code);
-// spam: 30 a minute
+// spam: 30 a minute. The counter remembers every write in the last minute (even deleted rows), so start clean.
+await new Promise((r) => setTimeout(r, 61_000));
 let firstBlock = null;
 for (let i = 1; i <= 32 && !firstBlock; i++) {
   const r = await a.from('transactions').insert(txn({ amount_cents: 100 + i, note: `spam ${i}` }));
   if (r.error) firstBlock = { i, code: r.error.code };
 }
 ok('31st entry within a minute is throttled', firstBlock?.i === 31 && firstBlock?.code === '53400', JSON.stringify(firstBlock));
+// spam limit can't be reset by deleting rows (counted in write_log, which users can't read or delete)
+await a.from('transactions').delete().eq('user_id', me);
+const churn = await a.from('transactions').insert(txn({ note: 'after delete' }));
+ok('deleting rows does not reset the spam limit', churn.error?.code === '53400', churn.error?.code ?? 'ACCEPTED');
+const wl = await a.from('write_log').select('*').limit(1);
+ok('write_log is not readable through the API', !!wl.error || (wl.data ?? []).length === 0, wl.error?.code ?? `${(wl.data ?? []).length} rows`);
+// car costs: km / litres per 100 km are stored as short strings; long or odd values refused
+const car = await prof({ essentials: { transport_daily_cents: 9000, km_each_way: '12', l_per_100km: '7.5' } });
+ok('car km and litres per 100 km are saved', !car.error, car.error?.code);
+await refused('car km field longer than 40 characters', prof({ essentials: { km_each_way: 'k'.repeat(41) } }), '23514');
+await refused('car km field as a number object', prof({ essentials: { km_each_way: { evil: 1 } } }), '23514');
+// feedback: insert-only, validated, 3 a day, nobody can read it back
+const fb = (o) => a.from('feedback').insert({ rating: 5, comment: 'Very useful', may_quote: true, locale: 'en', ...o });
+await refused('feedback rating 6', fb({ rating: 6 }));
+await refused('feedback rating 0', fb({ rating: 0 }));
+await refused('feedback comment "!!!!"', fb({ comment: '!!!!' }));
+await refused('feedback comment over 280 characters', fb({ comment: 'a'.repeat(281) }));
+await refused('feedback comment with RTL override', fb({ comment: 'nice\u202Eevil' }));
+await refused('feedback as another user', fb({ user_id: '9e1bb161-d840-418d-a381-0b60c5556742' }));
+// At most 3 a day (a re-run on the same day finds some already used; feedback can't be deleted, by design).
+let fbOk = 0, fbBlocked = null;
+for (let i = 0; i < 4 && !fbBlocked; i++) {
+  const r = await fb({ comment: `Useful ${i}` });
+  if (r.error) fbBlocked = r.error.code; else fbOk++;
+}
+ok('feedback: at most 3 a day, then refused', fbOk <= 3 && fbBlocked === '53400', `${fbOk} accepted, then ${fbBlocked}`);
+const fbRead = await a.from('feedback').select('*');
+ok('feedback cannot be read back, not even by its author', !!fbRead.error || (fbRead.data ?? []).length === 0, fbRead.error?.code ?? `${(fbRead.data ?? []).length} rows`);
+const fbAnon = await anon.from('feedback').insert({ rating: 5 });
+ok('anonymous feedback refused', !!fbAnon.error, fbAnon.error?.code);
 // anonymous
 const anonIns = await anon.from('transactions').insert(txn({}));
 ok('anonymous insert refused', !!anonIns.error, anonIns.error?.code);

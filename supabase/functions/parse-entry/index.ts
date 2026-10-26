@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
   if (bad) return json(req, { ok: false, error: 'unparsed', reason: bad }, 422);
   const written = amountsIn(text);
   if (written.length === 0) return json(req, { ok: false, error: 'unparsed', reason: 'no_amount' }, 422);
-  if (!(await withinLimit(userId, 'parse-entry', 30, 200))) return json(req, { ok: false, error: 'rate_limited' }, 429);
+  if (!(await withinLimit(userId, 'parse-entry', 30, 200, req))) return json(req, { ok: false, error: 'rate_limited' }, 429);
 
   const today = todaySA();
   const raw = await claudeTool({ system: SYSTEM, user: `Language hint: ${LOCALE_NAMES[input.locale]}.\nSentence: ${text}`, tool: TOOL, maxTokens: 300 });

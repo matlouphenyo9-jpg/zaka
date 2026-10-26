@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
   const text = stripInvisible(input.text).trim();
   const bad = scamTextError(text);
   if (bad) return json(req, { ok: false, error: bad }, 422);
-  if (!(await withinLimit(userId, 'explain-scam', 20, 100))) return json(req, { ok: false, error: 'rate_limited' }, 429);
+  if (!(await withinLimit(userId, 'explain-scam', 20, 100, req))) return json(req, { ok: false, error: 'rate_limited' }, 429);
 
   const rules = checkMessage(text);
   // Neutralise any attempt to close the fence from inside the message.

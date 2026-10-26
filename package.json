@@ -19,7 +19,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "test:attack": "node tests/attack.mjs",
     "test:qa": "node tests/judge-qa.mjs",
-    "test:demo": "node tests/demo-guard.mjs"
+    "test:demo": "node tests/demo-guard.mjs",
+    "test:demo-ai": "node tests/demo-ai-limit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
