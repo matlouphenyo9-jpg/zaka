@@ -8,6 +8,8 @@ import { CostsEditor, costsToEssentials, type CostsDraft, type Mode } from './On
 import { centsToInput, formatRand, parseRandInput } from '../lib/money';
 import { weekdayFromIndex } from '../lib/format';
 import { BalanceCard } from '../components/Balance';
+import { FeedbackCard, ShareButton } from '../components/Feedback';
+import { Link } from 'react-router-dom';
 import { useForecast } from '../lib/useForecast';
 import { NAME_MAX, cleanName, essentialsError } from '../lib/validate';
 
@@ -165,6 +167,11 @@ export function MeScreen() {
       )}
 
       <section className="space-y-3">
+        <FeedbackCard />
+        <ShareButton />
+      </section>
+
+      <section className="space-y-3">
         {p.is_demo && (
           <Card tone="teal">
             <p className="font-semibold">{tu('me_reset_demo')}</p>
@@ -186,6 +193,7 @@ export function MeScreen() {
         <p className="font-semibold">{tu('me_about')}</p>
         <p className="mt-1 text-sm text-ink-soft">{tu('me_about_body')}</p>
         <p className="mt-2 text-sm text-ink-soft">{tu('me_offline_cache')}</p>
+        <Link to="/privacy" className="mt-2 inline-flex min-h-tap items-center font-semibold text-teal underline underline-offset-2">{tu('privacy_link')}</Link>
         <p className="mt-2 text-xs text-ink-faint">{tu('me_version', { v: '1.0.0' })} · {tu('tagline')}</p>
       </Card>
 

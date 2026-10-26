@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useStore } from './lib/store';
@@ -9,6 +9,7 @@ import { CoinMark } from './components/Logo';
 import { LanguageScreen } from './screens/Language';
 import { AuthScreen } from './screens/Auth';
 import { ConsentScreen } from './screens/Consent';
+import { NotFoundScreen, PrivacyScreen } from './screens/Privacy';
 const OnboardingScreen = lazy(() => import('./screens/Onboarding').then((m) => ({ default: m.OnboardingScreen })));
 import { HomeScreen } from './screens/Home';
 const AddScreen = lazy(() => import('./screens/Add').then((m) => ({ default: m.AddScreen })));
@@ -28,6 +29,7 @@ function Splash() {
 
 export function App() {
   const { session, authReady, data, dataReady } = useStore();
+  const { pathname } = useLocation();
   const [locale, setLoc] = useState<LocaleCode | null>(savedLocale());
 
   // A real account's saved language wins once signed in (it follows the user across devices). The shared demo
@@ -40,6 +42,8 @@ export function App() {
     }
   }, [data.profile?.locale, data.profile?.is_demo, locale]);
 
+  // The privacy page is public: it opens before sign-in (linked from sign-up) and needs no account.
+  if (pathname === '/privacy') return <PrivacyScreen />;
   if (!locale) return <LanguageScreen onDone={(c) => setLoc(c)} />;
   if (!authReady) return <Splash />;
   if (!session) return <AuthScreen />;
@@ -56,7 +60,7 @@ export function App() {
         <Route path="plan" element={<PlanScreen />} />
         <Route path="safety" element={<SafetyScreen />} />
         <Route path="me" element={<MeScreen />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundScreen />} />
       </Route>
     </Routes>
     </Suspense>

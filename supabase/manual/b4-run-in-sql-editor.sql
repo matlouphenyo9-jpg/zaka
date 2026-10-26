@@ -58,3 +58,38 @@ begin
   end loop;
   return true;
 end $$;
+
+-- B4-G2: in-app feedback. Owner may INSERT only; nobody can read rows back through the API (no select policy).
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  rating smallint not null check (rating between 1 and 5),
+  comment text check (public.clean_text_ok(comment, 280)),
+  may_quote boolean not null default false,
+  locale text check (locale in ('en', 'zu', 'xh', 'nso', 'af')),
+  created_at timestamptz not null default now()
+);
+alter table public.feedback enable row level security;
+drop policy if exists "feedback: insert own" on public.feedback;
+create policy "feedback: insert own" on public.feedback for insert to authenticated with check ((select auth.uid()) = user_id);
+revoke all on public.feedback from anon;
+grant insert on public.feedback to authenticated;
+
+-- 3 a day per person (the shared demo account: 50, so judges are not blocked by each other).
+create or replace function public.limit_feedback() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare v_count int; v_limit int := 3;
+begin
+  if exists (select 1 from public.profiles where user_id = new.user_id and is_demo) then v_limit := 50; end if;
+  select count(*) into v_count from public.feedback where user_id = new.user_id and created_at > now() - interval '1 day';
+  if v_count >= v_limit then
+    raise exception 'Feedback limit reached for today' using errcode = '53400';
+  end if;
+  return new;
+end $$;
+create or replace trigger limit_feedback before insert on public.feedback for each row execute function public.limit_feedback();
+
+-- For the deck (run any time in the SQL Editor):
+--   select count(*) as feedback, round(avg(rating), 2) as avg_stars, count(*) filter (where may_quote) as quotable from public.feedback;
+--   select comment, rating, locale, created_at from public.feedback where may_quote and comment is not null order by created_at desc;
+--   select count(*) as real_signups from auth.users where email <> 'demo@zaka.app' and email not like '%@zaka-qa.test';
