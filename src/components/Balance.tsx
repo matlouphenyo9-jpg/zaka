@@ -141,12 +141,12 @@ export function BalanceCard({ f }: { f: Forecast }) {
   const [counting, setCounting] = useState(false);
   return (
     <Card>
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-[15px] text-ink-soft">{tu('balance_now')}</p>
           <p className="tabular text-2xl font-bold text-ink" data-testid="balance-now">{formatRand(f.balance_cents)}</p>
         </div>
-        <Button variant="secondary" className="shrink-0 px-3" icon="opening_balance" onClick={() => setCounting(true)}>
+        <Button variant="secondary" className="max-w-full px-3" icon="opening_balance" onClick={() => setCounting(true)}>
           {tu('count_cash')}
         </Button>
       </div>

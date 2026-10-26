@@ -187,7 +187,7 @@ async function viaFunction() {
     for (let attempt = 1; ; attempt++) {
       const r = await fetch(`${URL}/functions/v1/translate-draft`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json', ...(process.env.TRANSLATE_TOKEN ? { 'x-zaka-token': process.env.TRANSLATE_TOKEN } : {}) },
         body: JSON.stringify(body),
       });
       const j = await r.json().catch(() => ({}));
