@@ -38,7 +38,8 @@ export function pdfInfo(b: Uint8Array): { encrypted: boolean; pages: number | nu
   const encrypted = /\/Encrypt\s*(\d+\s+\d+\s+R|<<)/.test(s);
   const pageObjs = (s.match(/\/Type\s*\/Page(?![a-zA-Z])/g) ?? []).length;
   let counted = 0;
-  for (const m of s.matchAll(/\/Type\s*\/Pages\b[^>]*?\/Count\s+(\d+)|\/Count\s+(\d+)[^>]*?\/Type\s*\/Pages\b/g)) counted = Math.max(counted, Number(m[1] ?? m[2]));
+  // The gap between /Type /Pages and /Count is capped: an unbounded [^>]*? let a crafted 3 MB file run for minutes.
+  for (const m of s.matchAll(/\/Type\s*\/Pages\b[^>]{0,400}?\/Count\s+(\d+)|\/Count\s+(\d+)[^>]{0,400}?\/Type\s*\/Pages\b/g)) counted = Math.max(counted, Number(m[1] ?? m[2]));
   const pages = Math.max(pageObjs, counted);
   return { encrypted, pages: pages > 0 ? pages : null };
 }

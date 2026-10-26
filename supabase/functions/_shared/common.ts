@@ -66,42 +66,30 @@ async function clientKey(req: Request): Promise<string> {
   return Array.from(bytes.slice(0, 16), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const count = (q: PromiseLike<{ count: number | null }>) => Promise.resolve(q).then((r) => r.count ?? 0);
-
-/** Counts this call and says whether the user (and the whole project) is within the limits. */
+/**
+ * Says whether the user (and the whole project) is within the limits and, if so, records this call. The check and
+ * the record happen in one locked database step (ai_take), so a burst of simultaneous requests can't slip past.
+ */
 export async function withinLimit(userId: string, fn: string, perHour: number, perDay: number, req?: Request): Promise<boolean> {
-  const hourAgo = new Date(Date.now() - 3600_000).toISOString();
-  const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
-  const usage = () => admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('fn', fn);
   const { data: prof } = await admin.from('profiles').select('is_demo').eq('user_id', userId).maybeSingle();
-  const demo = !!prof?.is_demo && !!DEMO_LIMITS[fn];
-  let client: string | null = null;
-  if (demo && req) {
-    // Shared judge account: each person gets a small allowance, so one person can't use up everyone's.
-    const lim = DEMO_LIMITS[fn];
-    client = await clientKey(req);
-    const [ch, cd, acct] = await Promise.all([
-      count(usage().eq('user_id', userId).eq('client', client).gte('created_at', hourAgo)),
-      count(usage().eq('user_id', userId).eq('client', client).gte('created_at', dayAgo)),
-      count(usage().eq('user_id', userId).gte('created_at', dayAgo)),
-    ]);
-    if (ch >= lim.perHour || cd >= lim.perDay || acct >= lim.accountPerDay) {
-      log(fn, 'demo_limit');
-      return false;
-    }
-  } else {
-    const [h, d] = await Promise.all([
-      count(usage().eq('user_id', userId).gte('created_at', hourAgo)),
-      count(usage().eq('user_id', userId).gte('created_at', dayAgo)),
-    ]);
-    if (h >= perHour || d >= perDay) return false;
+  // Shared judge account: each network gets a small allowance, so one person can't use up everyone's.
+  const demo = !!prof?.is_demo && !!DEMO_LIMITS[fn] && !!req;
+  const lim = demo ? DEMO_LIMITS[fn] : { perHour, perDay, accountPerDay: perDay };
+  const { data, error } = await admin.rpc('ai_take', {
+    p_user: userId,
+    p_fn: fn,
+    p_client: demo ? await clientKey(req!) : null,
+    p_per_hour: lim.perHour,
+    p_per_day: lim.perDay,
+    p_account_per_day: lim.accountPerDay,
+    p_global_per_day: GLOBAL_PER_DAY[fn] ?? 1000,
+  });
+  if (error) {
+    log(fn, 'limit_check_failed', error.code ?? 'unknown');
+    return false; // fail closed: no AI call if the limit can't be checked
   }
-  if ((await count(usage().gte('created_at', dayAgo))) >= (GLOBAL_PER_DAY[fn] ?? 1000)) {
-    log(fn, 'global_budget_reached');
-    return false;
-  }
-  await admin.from('ai_usage').insert({ user_id: userId, fn, client });
-  return true;
+  if (data !== 'ok') log(fn, String(data));
+  return data === 'ok';
 }
 
 /** Logs an event name and code only — never message text, amounts or user ids. */

@@ -24,6 +24,13 @@ describe('PDF checks', () => {
     expect(pdfInfo(text('%PDF-1.4 << /Type /Pages /Count 20 >>')).pages).toBe(20);
     expect(pdfInfo(text('%PDF-1.4 << /Type /Page >> trailer << /Encrypt 5 0 R >>')).encrypted).toBe(true);
   });
+  it('a crafted 3 MB PDF can’t make the page check crawl (was minutes, must be well under a second)', () => {
+    for (const body of ['/Type /Pages '.repeat(223_000), '/Count 1 '.repeat(322_000)]) {
+      const t0 = performance.now();
+      pdfInfo(text('%PDF-1.7\n' + body));
+      expect(performance.now() - t0).toBeLessThan(1000);
+    }
+  });
   it('a PDF whose pages can’t be counted gives null (the server refuses it)', () => expect(pdfInfo(text('%PDF-1.5 nothing here')).pages).toBeNull());
 });
 

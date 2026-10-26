@@ -23,7 +23,8 @@
     "test:demo-ai": "node tests/demo-ai-limit.mjs",
     "test:scan": "node tests/scan.mjs",
     "screenshots:b5": "node scripts/screenshots-b5.mjs",
-    "samples": "node scripts/gen-sample-slips.mjs"
+    "samples": "node scripts/gen-sample-slips.mjs",
+    "test:audit": "node tests/audit-b6.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

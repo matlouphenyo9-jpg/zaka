@@ -38,8 +38,11 @@ export function AuthScreen() {
     setMsg(null);
     try {
       if (mode === 'signin') {
+        // The shared demo starts fresh however it is opened, so nobody sees what the last visitor left behind.
+        if (cleanEmail === DEMO_EMAIL) sessionStorage.setItem(DEMO_RESEED_KEY, '1');
         const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) {
+          sessionStorage.removeItem(DEMO_RESEED_KEY);
           const left = recordFailure();
           setWait(Math.ceil(left / 1000));
           setMsg({ tone: 'error', text: t(authErrorKey(error, 'signin')) });
