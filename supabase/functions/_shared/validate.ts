@@ -110,6 +110,26 @@ export function looksLikeMash(s: string): boolean {
   return words.every(bad) && !known.test(s.toLowerCase());
 }
 
+/** Realistic ranges for everyday costs (cents), the same limits as essentials_ok() in Postgres. */
+export const ESSENTIAL_LIMITS: Record<string, number> = {
+  transport_daily_cents: 100_000, // R1,000 a day
+  fare_single_cents: 50_000, // R500 a trip
+  food_weekly_cents: 1_000_000, // R10,000 a week
+  electricity_weekly_cents: 500_000, // R5,000 a week
+  data_weekly_cents: 200_000, // R2,000 a week
+  trips_per_day: 10,
+};
+
+/** Names the first everyday-cost field that is outside its realistic range, or null. */
+export function essentialsError(e: Record<string, unknown>): string | null {
+  for (const [k, max] of Object.entries(ESSENTIAL_LIMITS)) {
+    const v = e[k];
+    if (v == null) continue;
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > max) return k;
+  }
+  return null;
+}
+
 /** A numeric range check for onboarding/price-book style fields; returns the parsed cents or an error. */
 export function inRange(input: string, minCents: number, maxCents: number): Result<number, AmountError | 'out_of_range'> {
   if (String(input).trim() === '0' || String(input).trim() === '0,00' || String(input).trim() === '0.00') {

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FLAGS } from '../lib/flags';
 import { useStore } from '../lib/store';
 import { forecastFor } from '../lib/useForecast';
 import { Button, Card, Chip, Field, Row, ScreenTitle, Segmented, Toast } from '../components/ui';
@@ -20,6 +21,10 @@ export function AddScreen() {
   const { t: tu } = useTranslation('ui');
   const { addTxn, deleteTxn, data } = useStore();
   const today = todaySA();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (window.location.hash === '#typeit') document.getElementById('typeit')?.focus();
+  }, []);
   const [direction, setDirection] = useState<Direction>('in');
   const [amount, setAmount] = useState(''); // rand string typed on the keypad
   const [category, setCategory] = useState<Category | null>(null);
@@ -151,6 +156,10 @@ export function AddScreen() {
         </Card>
       )}
 
+      {FLAGS.slipScan && (
+        <Button block icon="camera" className="mb-4 !min-h-[56px] text-lg" onClick={() => navigate('/scan')}>{tu('scan_cta')}</Button>
+      )}
+
       {/* Type it */}
       <Card className="mb-4">
         <label htmlFor="typeit" className="flex items-center gap-2 text-base font-semibold">
@@ -239,7 +248,7 @@ export function AddScreen() {
 
       {recent.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-1 text-lg font-bold">{tu('recent')}</h2>
+          <div className="mb-1 flex items-center justify-between"><h2 className="text-lg font-bold">{tu('recent')}</h2><Link to="/transactions" className="inline-flex min-h-tap items-center font-semibold text-teal">{tu('tx_see_all')} →</Link></div>
           <div className="divide-y divide-line rounded-xl2 border border-line bg-white px-4">
             {recent.map((x) => (
               <Row

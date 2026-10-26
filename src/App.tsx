@@ -11,11 +11,14 @@ import { AuthScreen } from './screens/Auth';
 import { ConsentScreen } from './screens/Consent';
 import { NotFoundScreen, PrivacyScreen } from './screens/Privacy';
 import { LockScreen, usePinLock } from './components/PinLock';
+import { FLAGS } from './lib/flags';
 const OnboardingScreen = lazy(() => import('./screens/Onboarding').then((m) => ({ default: m.OnboardingScreen })));
 import { HomeScreen } from './screens/Home';
 const AddScreen = lazy(() => import('./screens/Add').then((m) => ({ default: m.AddScreen })));
 const PlanScreen = lazy(() => import('./screens/Plan').then((m) => ({ default: m.PlanScreen })));
 const SafetyScreen = lazy(() => import('./screens/Safety').then((m) => ({ default: m.SafetyScreen })));
+const ScanScreen = lazy(() => import('./screens/Scan').then((m) => ({ default: m.ScanScreen })));
+const TransactionsScreen = lazy(() => import('./screens/Transactions').then((m) => ({ default: m.TransactionsScreen })));
 const MeScreen = lazy(() => import('./screens/Me').then((m) => ({ default: m.MeScreen })));
 
 function Splash() {
@@ -64,6 +67,8 @@ export function App() {
         <Route path="plan" element={<PlanScreen />} />
         <Route path="safety" element={<SafetyScreen />} />
         <Route path="me" element={<MeScreen />} />
+        {FLAGS.slipScan && <Route path="scan" element={<ScanScreen />} />}
+        <Route path="transactions" element={<TransactionsScreen />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
     </Routes>

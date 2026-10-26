@@ -20,7 +20,10 @@
     "test:attack": "node tests/attack.mjs",
     "test:qa": "node tests/judge-qa.mjs",
     "test:demo": "node tests/demo-guard.mjs",
-    "test:demo-ai": "node tests/demo-ai-limit.mjs"
+    "test:demo-ai": "node tests/demo-ai-limit.mjs",
+    "test:scan": "node tests/scan.mjs",
+    "screenshots:b5": "node scripts/screenshots-b5.mjs",
+    "samples": "node scripts/gen-sample-slips.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

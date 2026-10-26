@@ -322,7 +322,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ---------------------------------------------------------------- actions (optimistic + queued)
   const addTxn: Ctx['addTxn'] = useCallback(async (t) => {
     const txn: Txn = { ...t, id: t.id ?? uuid() } as Txn;
-    await writeLocal({ ...dataRef.current, txns: [...dataRef.current.txns, txn] });
+    // Saving an existing id replaces it (Transactions → edit), so a corrected entry never shows twice.
+    await writeLocal({ ...dataRef.current, txns: [...dataRef.current.txns.filter((x) => x.id !== txn.id), txn] });
     const queued = !navigator.onLine;
     await enqueue({ table: 'transactions', kind: 'upsert', row: { ...txn } });
     return { queued, txn };

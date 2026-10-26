@@ -67,6 +67,9 @@ export function MeScreen() {
   return (
     <div className="space-y-7">
       <ScreenTitle sub={session?.user.email}>{tu('me')}</ScreenTitle>
+      <Link to="/transactions" className="flex min-h-tap items-center justify-between rounded-xl2 border border-line bg-white px-4 font-semibold text-teal">
+        <span className="flex items-center gap-2"><Icon name="list" size={20} /> {tu('tx_title')}</span><span aria-hidden="true">→</span>
+      </Link>
 
       <Section title={tu('me_language')} icon="language">
         <div className="flex flex-wrap gap-2">

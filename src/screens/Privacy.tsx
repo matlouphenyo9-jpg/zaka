@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Logo } from '../components/Logo';
 import { Button } from '../components/ui';
 
-const SECTIONS = ['who', 'collect', 'never', 'ai', 'where', 'keep', 'rights', 'advice'] as const;
+const SECTIONS = ['who', 'collect', 'never', 'ai', 'slips', 'where', 'keep', 'rights', 'advice'] as const;
 
 export function PrivacyScreen() {
   const { t: tu } = useTranslation('ui');

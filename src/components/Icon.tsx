@@ -41,6 +41,8 @@ const PATHS: Record<string, string> = {
   calendar: 'M4.5 6h15v14h-15V6Zm0 4h15M8.5 3.5V7M15.5 3.5V7',
   edit: 'M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4',
   link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
+  camera: 'M4 8h3l1.5-2.5h7L17 8h3v11H4V8Zm8 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z',
+  list: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
 };
 
 export function Icon({ name, size = 22, className = '', strokeWidth = 1.8 }: { name: string; size?: number; className?: string; strokeWidth?: number }) {

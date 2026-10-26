@@ -19,7 +19,7 @@ export interface Txn {
   source: Source;
   note?: string | null;
   occurred_on: ISODate;
-  created_via: 'manual' | 'ai_parsed' | 'seed';
+  created_via: 'manual' | 'ai_parsed' | 'seed' | 'slip';
   confirmed: boolean;
 }
 

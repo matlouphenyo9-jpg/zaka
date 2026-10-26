@@ -11,6 +11,7 @@ import { stokvelPlan } from '../engine/forecast';
 import { todaySA } from '../lib/dates';
 import { BalanceCard } from '../components/Balance';
 import type { ConfidenceLevel } from '../engine/forecast';
+import { FLAGS } from '../lib/flags';
 
 const CONF_TONE: Record<ConfidenceLevel, string> = { low: 'bg-amber-soft text-amber-ink', medium: 'bg-ink/5 text-ink', high: 'bg-teal-soft text-teal-dark' };
 const CONF_BARS: Record<ConfidenceLevel, number> = { low: 1, medium: 2, high: 3 };
@@ -51,7 +52,12 @@ export function HomeScreen() {
           </span>
           <p className="mt-4 text-lg font-semibold">{t('empty')}</p>
           <p className="mt-2 text-ink-soft">{t('rough')}</p>
-          <Button className="mt-5" block icon="plus" onClick={() => navigate('/add')}>
+          {FLAGS.slipScan && (
+            <Button className="mt-5 !min-h-[64px] text-lg" block icon="camera" onClick={() => navigate('/scan')} data-testid="home-scan">
+              {tu('scan_cta')}
+            </Button>
+          )}
+          <Button className="mt-3" block variant={FLAGS.slipScan ? 'secondary' : 'primary'} icon="plus" onClick={() => navigate('/add')}>
             {t('add_money')}
           </Button>
         </Card>
@@ -87,7 +93,20 @@ export function HomeScreen() {
         </div>
       </section>
 
+      {FLAGS.slipScan && (
+        <Button block icon="camera" onClick={() => navigate('/scan')} className="!min-h-[68px] text-xl shadow-card" data-testid="home-scan">
+          {tu('scan_cta')}
+        </Button>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="secondary" icon="plus" onClick={() => navigate('/add')}>{tu('add_by_hand')}</Button>
+        <Button variant="secondary" icon="sparkle" onClick={() => navigate('/add#typeit')}>{tu('type_it_short')}</Button>
+      </div>
+
       <BalanceCard f={f} />
+      <Link to="/transactions" className="flex min-h-tap items-center justify-between rounded-xl2 border border-line bg-white px-4 font-semibold text-teal" data-testid="home-transactions">
+        <span className="flex items-center gap-2"><Icon name="list" size={20} /> {tu('tx_see_all')}</span><span aria-hidden="true">→</span>
+      </Link>
 
       {/* Tight-week warning */}
       {f.shortfall ? (
@@ -142,9 +161,7 @@ export function HomeScreen() {
 
       {f.confidence.level === 'low' && <p className="rounded-xl bg-ink/5 px-4 py-3 text-[15px] text-ink-soft">{t('rough')}</p>}
 
-      <Button block icon="plus" onClick={() => navigate('/add')} className="!min-h-[56px] text-lg">
-        {tu('money_in')} / {tu('money_out')}
-      </Button>
+
     </div>
   );
 }
