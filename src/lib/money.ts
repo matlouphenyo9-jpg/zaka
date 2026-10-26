@@ -1,3 +1,4 @@
+import { parseRands } from './validate';
 // Money is integer cents everywhere. Formatting keeps the "R" and digits stable in every language.
 
 export function formatRand(cents: number, opts: { cents?: boolean } = {}): string {
@@ -11,12 +12,14 @@ export function formatRand(cents: number, opts: { cents?: boolean } = {}): strin
   return neg ? `−${s}` : s;
 }
 
-/** Parse what a person types ("350", "R1 200,50", "1200.5") into cents. Returns null when invalid. */
+/**
+ * Parse what a person types ("350", "R1 200,50", "1200.5") into cents. Returns null when invalid (see lib/validate:
+ * letters, signs, "1e9", emoji and more than R1,000,000 are refused). "0" is returned as 0; callers decide if 0 is allowed.
+ */
 export function parseRandInput(input: string): number | null {
-  const cleaned = input.replace(/[Rr\s ]/g, '').replace(',', '.');
-  if (!/^\d{1,7}(\.\d{0,2})?$/.test(cleaned)) return null;
-  const cents = Math.round(parseFloat(cleaned) * 100);
-  return Number.isFinite(cents) ? cents : null;
+  if (/^\s*R?\s*0+([.,]0{1,2})?\s*$/i.test(input)) return 0;
+  const r = parseRands(input);
+  return r.ok ? r.value : null;
 }
 
 export function centsToInput(cents: number): string {

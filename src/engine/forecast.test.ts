@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildForecast } from './forecast';
+import { buildForecast, currentBalance, safeBreakdown } from './forecast';
+import { detectSpending, incomeSourceOf } from './patterns';
 import type { PlanProfile, Txn } from './types';
 
 const today = '2026-10-24';
@@ -55,5 +56,49 @@ describe('R3 acceptance checks', () => {
   it('is low confidence with little data', () => {
     const f = buildForecast({ today, txns: [opening(10000)], goals: [], obligations: [], profile: everyDay(0) });
     expect(f.confidence.level).toBe('low');
+  });
+});
+
+describe('B4-H: money you have now and "How we got this"', () => {
+  it('R1 example: R1,200 − R300 bills − R500 essentials + R200 expected = R600 left = R600 safe', () => {
+    const profile = everyDay(10000);
+    const f = buildForecast({
+      today, txns: [opening(120000)], goals: [],
+      profile: { ...profile, income_plan: [
+        { key: 'job', source: 'piece_job', amount_cents: 40000, rule: { kind: 'frequency', per_week: 7 / 3 }, reliability: 'likely' },
+        { key: 'pay', source: 'salary', amount_cents: 100000, rule: { kind: 'once', date: '2026-10-29' }, reliability: 'likely' },
+      ] },
+      obligations: [{ id: 'e', name: 'Electricity', amount_cents: 30000, due_kind: 'once', due_date: '2026-10-25', category: 'electricity', active: true }],
+    });
+    expect(safeBreakdown(f)).toEqual({
+      balance_cents: 120000, bills_cents: 30000, essentials_cents: 50000, expected_cents: 20000,
+      left_cents: 60000, low_day_cents: 0, reserve_cents: 0, set_aside_cents: 0, safe_cents: 60000,
+    });
+  });
+
+  it('a dip before payday is shown as its own line, and the lines add up to safe to spend', () => {
+    // R1,000 now, R100/day, R600 bill tomorrow, R500 grant on day 3 (likely → counted R250), salary on day 5 ends it
+    const f = buildForecast({
+      today, txns: [opening(100000)], goals: [],
+      profile: { ...everyDay(10000), reserve_amount: 5000, income_plan: [
+        { key: 'g', source: 'grant', amount_cents: 50000, rule: { kind: 'once', date: '2026-10-27' }, reliability: 'confirmed' },
+        { key: 'pay', source: 'salary', amount_cents: 100000, rule: { kind: 'once', date: '2026-10-29' }, reliability: 'likely' },
+      ] },
+      obligations: [{ id: 'b', name: 'Rent', amount_cents: 60000, due_kind: 'once', due_date: '2026-10-25', category: 'rent', active: true }],
+    });
+    const b = safeBreakdown(f);
+    expect(b.left_cents - b.low_day_cents).toBe(f.min_balance_cents);
+    expect(Math.max(0, b.left_cents - b.low_day_cents - b.reserve_cents - b.set_aside_cents)).toBe(f.safe_cents);
+  });
+
+  it('a balance correction changes money now but is never learned as spending or income', () => {
+    const txns: Txn[] = [
+      opening(50000),
+      { id: 'c', direction: 'out', amount_cents: 12000, category: 'balance_correction', source: 'cash', occurred_on: today, created_via: 'manual', confirmed: true },
+    ];
+    expect(currentBalance(txns, today)).toBe(38000);
+    const p = detectSpending(txns, today);
+    expect(p.by_weekday.every((x) => x === 0)).toBe(true);
+    expect(incomeSourceOf({ category: 'balance_correction', source: 'cash' })).toBeNull();
   });
 });

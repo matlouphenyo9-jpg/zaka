@@ -7,6 +7,7 @@ import { Icon } from '../components/Icon';
 import { ConfidenceBadge } from './Home';
 import { insightIcon, useInsightText } from '../components/InsightText';
 import { formatEstimate, formatRand, parseRandInput } from '../lib/money';
+import { SafeBreakdownList } from '../components/Balance';
 import { shortDate, longDate, weekdayFromIndex } from '../lib/format';
 import { addDays, diffDays, todaySA } from '../lib/dates';
 import { savedForGoal, stokvelPlan, type Forecast } from '../engine/forecast';
@@ -59,9 +60,18 @@ function WhySheet({ f, open, onClose }: { f: Forecast; open: boolean; onClose: (
   return (
     <Sheet open={open} onClose={onClose} title={t('why')}>
       <div className="space-y-4 text-base">
+        <div className="rounded-xl2 border border-line bg-white px-4" data-testid="why-balance">
+          <div className="flex items-baseline justify-between gap-3 py-3">
+            <p className="font-bold text-ink">{tu('balance_now')}</p>
+            <span className="tabular text-lg font-bold">{formatRand(f.balance_cents)}</span>
+          </div>
+        </div>
+        <div className="rounded-xl2 border border-line bg-white px-4">
+          <SafeBreakdownList f={f} />
+        </div>
         <p className="text-ink-soft">{f.horizon_reason === 'income' && f.horizon_income ? tu('plan_horizon_income', { source: tu(`src_${f.horizon_income.source}`), date: shortDate(f.horizon_income.date) }) : tu('plan_horizon_cap')}</p>
         <div className="divide-y divide-line rounded-xl2 border border-line bg-white px-4">
-          <Row icon="opening_balance" title={tu('plan_balance_now')} right={<span className="tabular font-semibold">{formatRand(f.balance_cents)}</span>} />
+          <Row icon="opening_balance" title={tu('balance_now')} right={<span className="tabular font-semibold">{formatRand(f.balance_cents)}</span>} />
           {horizonIncome.map((e, i) => (
             <Row key={`i${i}`} icon={e.source === 'grant' ? 'grant' : 'piece_job'} tone="in" title={`${t('expected_money')}: ${tu(`src_${e.source}`)}`} sub={`${shortDate(e.date)} · ${formatRand(e.amount_cents)} · ${tu(`weight_${e.reliability}`)}`} right={<span className="tabular font-semibold text-teal-dark">+{formatEstimate(e.amount_cents * e.weight)}</span>} />
           ))}

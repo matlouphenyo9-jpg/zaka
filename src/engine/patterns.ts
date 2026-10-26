@@ -60,6 +60,7 @@ export function median(xs: number[]): number {
 export function incomeSourceOf(t: Pick<Txn, 'category' | 'source'>): IncomeSource | null {
   switch (t.category) {
     case 'opening_balance':
+    case 'balance_correction':
       return null;
     case 'grant':
       return 'grant';
@@ -195,7 +196,8 @@ export function balanceHistory(txns: Txn[], today: ISODate): { date: ISODate; ba
 
 export function detectSpending(txns: Txn[], today: ISODate): SpendingPattern {
   const confirmed = txns.filter((t) => t.confirmed && t.occurred_on <= today);
-  const outs = confirmed.filter((t) => t.direction === 'out');
+  // A "Count my cash" correction fixes the balance; it is not spending, so it must not teach spending patterns.
+  const outs = confirmed.filter((t) => t.direction === 'out' && t.category !== 'balance_correction');
   const empty: SpendingPattern = { by_weekday: new Array(7).fill(0), by_part: { early: 0, mid: 0, late: 0 }, tight_day: null, busiest_weekday: null, weekly: {} };
   if (outs.length === 0) return empty;
 

@@ -7,6 +7,9 @@ import { Icon } from '../components/Icon';
 import { CostsEditor, costsToEssentials, type CostsDraft, type Mode } from './Onboarding';
 import { centsToInput, formatRand, parseRandInput } from '../lib/money';
 import { weekdayFromIndex } from '../lib/format';
+import { BalanceCard } from '../components/Balance';
+import { useForecast } from '../lib/useForecast';
+import { NAME_MAX, cleanName } from '../lib/validate';
 import type { Obligation } from '../engine/types';
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
@@ -41,6 +44,7 @@ export function MeScreen() {
   const { t: tu } = useTranslation('ui');
   const { data, saveProfile, changeLocale, saveObligation, deleteObligation, priceBook, resetDemo, deleteAccount, signOut, pending, session } = useStore();
   const p = data.profile!;
+  const { forecast } = useForecast();
   const [name, setName] = useState(p.display_name ?? '');
   const [reserve, setReserve] = useState(p.reserve_amount ? centsToInput(p.reserve_amount) : '');
   const [costs, setCosts] = useState<CostsDraft>(() => draftFromProfile(p));
@@ -69,17 +73,24 @@ export function MeScreen() {
         {!hasFullUi(i18n.language) && <p className="mt-2 text-sm text-ink-soft">{tu('english_only_note')}</p>}
       </Section>
 
+      <Section title={tu('balance_now')} icon="opening_balance">
+        <BalanceCard f={forecast} />
+      </Section>
+
       <Section title={tu('me_profile')} icon="user">
         <Card className="space-y-4">
-          <Field label={tu('me_name')} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+          <Field label={tu('me_name')} value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} />
           <Field label={tu('me_reserve')} inputMode="decimal" value={reserve} onChange={(e) => setReserve(e.target.value)} hint={tu('plan_reserve')} />
           <Button
             variant="secondary"
             onClick={async () => {
               const r = reserve.trim() ? parseRandInput(reserve) : 0;
               if (r == null) return setError(t('amount_error'));
+              const n = cleanName(name, false);
+              if (!n.ok) return setError(tu(`err_${n.error}`));
               setError(null);
-              await saveProfile({ display_name: name.trim() || null, reserve_amount: r });
+              setName(n.value);
+              await saveProfile({ display_name: n.value || null, reserve_amount: r });
               setToast(tu('me_saved'));
             }}
           >

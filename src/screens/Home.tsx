@@ -9,6 +9,7 @@ import { shortDate } from '../lib/format';
 import { insightIcon, useInsightText } from '../components/InsightText';
 import { stokvelPlan } from '../engine/forecast';
 import { todaySA } from '../lib/dates';
+import { BalanceCard } from '../components/Balance';
 import type { ConfidenceLevel } from '../engine/forecast';
 
 const CONF_TONE: Record<ConfidenceLevel, string> = { low: 'bg-amber-soft text-amber-ink', medium: 'bg-ink/5 text-ink', high: 'bg-teal-soft text-teal-dark' };
@@ -85,6 +86,8 @@ export function HomeScreen() {
           </Link>
         </div>
       </section>
+
+      <BalanceCard f={f} />
 
       {/* Tight-week warning */}
       {f.shortfall ? (

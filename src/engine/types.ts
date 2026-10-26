@@ -7,7 +7,7 @@ export const SPEND_CATEGORIES = [
   'transport', 'food', 'electricity', 'data_airtime', 'rent', 'school', 'stokvel',
   'savings_goal', 'funeral', 'debt', 'health', 'household', 'other',
 ] as const;
-export type Category = 'opening_balance' | (typeof INCOME_CATEGORIES)[number] | (typeof SPEND_CATEGORIES)[number];
+export type Category = 'opening_balance' | 'balance_correction' | (typeof INCOME_CATEGORIES)[number] | (typeof SPEND_CATEGORIES)[number];
 export type Source = 'cash' | 'bank' | 'grant' | 'piece_job' | 'trade' | 'other';
 
 export interface Txn {

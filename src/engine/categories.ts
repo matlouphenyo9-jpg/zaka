@@ -5,7 +5,7 @@ export const OUT_CATEGORIES: Category[] = ['transport', 'food', 'electricity', '
 
 /** Icon name per category (see components/Icon). */
 export const CATEGORY_ICON: Record<Category, string> = {
-  opening_balance: 'opening_balance', income: 'income', grant: 'grant', piece_job: 'piece_job', salary: 'salary', trade: 'trade', gift: 'gift',
+  opening_balance: 'opening_balance', balance_correction: 'opening_balance', income: 'income', grant: 'grant', piece_job: 'piece_job', salary: 'salary', trade: 'trade', gift: 'gift',
   transport: 'transport', food: 'food', electricity: 'electricity', data_airtime: 'data_airtime', rent: 'rent', school: 'school', stokvel: 'stokvel',
   savings_goal: 'savings_goal', funeral: 'funeral', debt: 'debt', health: 'health', household: 'household', other: 'other',
 };

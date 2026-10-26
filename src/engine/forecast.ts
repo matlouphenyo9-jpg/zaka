@@ -317,6 +317,46 @@ export function buildForecast(input: ForecastInput): Forecast {
   };
 }
 
+export interface SafeBreakdown {
+  balance_cents: number;
+  bills_cents: number;
+  essentials_cents: number;
+  expected_cents: number;
+  /** what the plan says is left the day before the horizon money arrives */
+  left_cents: number;
+  /** extra kept back because a day before then dips lower than the end */
+  low_day_cents: number;
+  reserve_cents: number;
+  set_aside_cents: number;
+  safe_cents: number;
+}
+
+/**
+ * "How we got this": money now − bills − essentials + expected (weighted) = left by the horizon; minus the dip to the
+ * lowest day, the reserve and set-asides = safe to spend. The lines always add up to the engine's own numbers.
+ */
+export function safeBreakdown(f: Forecast): SafeBreakdown {
+  const H = f.horizon_days;
+  const inH = f.days.slice(0, H);
+  const bills = inH.reduce((s, d) => s + d.costs_cents, 0);
+  const essentials = inH.reduce((s, d) => s + d.essentials_cents, 0);
+  // The horizon day's own income is not counted (money must last until it arrives).
+  const expected = inH.reduce((s, d, i) => s + (i === H - 1 && f.horizon_reason === 'income' ? 0 : d.income_cents), 0);
+  const left = f.balance_cents - bills - essentials + expected;
+  const low_day = Math.max(0, left - f.min_balance_cents);
+  return {
+    balance_cents: f.balance_cents,
+    bills_cents: bills,
+    essentials_cents: essentials,
+    expected_cents: expected,
+    left_cents: left,
+    low_day_cents: low_day,
+    reserve_cents: f.reserve_cents,
+    set_aside_cents: f.set_aside_cents,
+    safe_cents: f.safe_cents,
+  };
+}
+
 /** "Your R200 stokvel is due Fri — put away R40 a day." */
 export function stokvelPlan(obligations: Obligation[], today: ISODate): { amount_cents: number; due: ISODate; days: number; daily_cents: number; name: string } | null {
   const candidates = obligations
