@@ -16,7 +16,10 @@
     "sync:functions": "node scripts/sync-functions-shared.mjs",
     "test:ai": "node tests/ai-locales.mjs",
     "translate": "node scripts/translate.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "test:attack": "node tests/attack.mjs",
+    "test:qa": "node tests/judge-qa.mjs",
+    "test:demo": "node tests/demo-guard.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
