@@ -414,5 +414,11 @@
   "tx_from_slip": "Igcinwe kwisilip",
   "privacy_slips_h": "Imifanekiso yezilip",
   "privacy_slips_b": "Imifanekiso nee-PDF zezilip zifundwa kanye ukuzalisa into oyifakayo kwaye azigcinwa. Zithunyelwa ku-Anthropic (Claude) ukuze zifundwe, emva koko ziyalahlwa; kugcinwa kuphela into oyijongileyo wayigcina. Iinombolo zekhadi, ze-token, ze-akhawunti nezesazisi ziyafihlwa kwaye azigcinwa.",
-  "auth_signup_done": "Kwenziwe. Ukuba le imeyile intsha, iakhawunti yakho ilungile (jonga imeyile yakho ukuba sicela ukuqinisekisa). Ukuba sele unayo iakhawunti, sebenzisa iphasiwedi yayo. Cofa u-Ngena ukuze uqhubeke."
+  "auth_signup_done": "Kwenziwe. Ukuba le imeyile intsha, iakhawunti yakho ilungile (jonga imeyile yakho ukuba sicela ukuqinisekisa). Ukuba sele unayo iakhawunti, sebenzisa iphasiwedi yayo. Cofa u-Ngena ukuze uqhubeke.",
+  "greet_morning": "Molo kusasa, {name}",
+  "greet_afternoon": "Molo emva kwemini, {name}",
+  "greet_evening": "Molo ngokuhlwa, {name}",
+  "greet_morning_plain": "Molo kusasa",
+  "greet_afternoon_plain": "Molo emva kwemini",
+  "greet_evening_plain": "Molo ngokuhlwa"
 }

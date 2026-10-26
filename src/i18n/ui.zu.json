@@ -414,5 +414,11 @@
   "tx_from_slip": "Kugcinwe kusuka esiliphini",
   "privacy_slips_h": "Izithombe zamasiliphu",
   "privacy_slips_b": "Izithombe nama-PDF amasiliphu afundwa kanye ukugcwalisa okufakile futhi awagcinwa. Athunyelwa ku-Anthropic (Claude) ukuze afundwe, bese elahlwa; kugcinwa kuphela okufakile okuhlolile wakugcina. Izinombolo zekhadi, ze-token, ze-akhawunti nezikamazisi ziyafihlwa futhi azigcinwa.",
-  "auth_signup_done": "Kwenziwe. Uma le imeyili intsha, i-akhawunti yakho isilungile (hlola imeyili yakho uma sicela ukuqinisekisa). Uma usuvele unayo i-akhawunti, sebenzisa iphasiwedi yayo. Thepha u-Ngena ukuze uqhubeke."
+  "auth_signup_done": "Kwenziwe. Uma le imeyili intsha, i-akhawunti yakho isilungile (hlola imeyili yakho uma sicela ukuqinisekisa). Uma usuvele unayo i-akhawunti, sebenzisa iphasiwedi yayo. Thepha u-Ngena ukuze uqhubeke.",
+  "greet_morning": "Sawubona ekuseni, {name}",
+  "greet_afternoon": "Sawubona ntambama, {name}",
+  "greet_evening": "Sawubona kusihlwa, {name}",
+  "greet_morning_plain": "Sawubona ekuseni",
+  "greet_afternoon_plain": "Sawubona ntambama",
+  "greet_evening_plain": "Sawubona kusihlwa"
 }

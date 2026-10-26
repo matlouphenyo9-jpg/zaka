@@ -414,5 +414,11 @@
   "tx_from_slip": "Van ’n strokie gestoor",
   "privacy_slips_h": "Foto’s van strokies",
   "privacy_slips_b": "Foto’s en PDF’s van strokies word een keer gelees om jou inskrywing in te vul en word nie gehou nie. Hulle word na Anthropic (Claude) gestuur om gelees te word en dan weggegooi; net die inskrywing wat jy nagaan en stoor, word bewaar. Kaart-, token-, rekening- en ID-nommers word versteek en nooit gestoor nie.",
-  "auth_signup_done": "Klaar. As hierdie e-pos nuut is, is jou rekening gereed (kyk na jou e-pos as ons vra dat jy bevestig). As jy reeds ’n rekening het, gebruik sy wagwoord. Tik Teken in om voort te gaan."
+  "auth_signup_done": "Klaar. As hierdie e-pos nuut is, is jou rekening gereed (kyk na jou e-pos as ons vra dat jy bevestig). As jy reeds ’n rekening het, gebruik sy wagwoord. Tik Teken in om voort te gaan.",
+  "greet_morning": "Goeie môre, {name}",
+  "greet_afternoon": "Goeie middag, {name}",
+  "greet_evening": "Goeie naand, {name}",
+  "greet_morning_plain": "Goeie môre",
+  "greet_afternoon_plain": "Goeie middag",
+  "greet_evening_plain": "Goeie naand"
 }

@@ -414,5 +414,11 @@
   "tx_from_slip": "E bolokilwe go tšwa go slip",
   "privacy_slips_h": "Diswantšho tša di-slip",
   "privacy_slips_b": "Diswantšho le di-PDF tša di-slip di balwa gatee go tlatša tsenyo ya gago gomme ga di bolokwe. Di romelwa go Anthropic (Claude) go balwa, ke moka di lahlwa; go bolokwa fela tsenyo ye o e hlahlobilego wa e boloka. Dinomoro tša karata, token, akhaonto le ID di a utwa gomme ga di bolokwe.",
-  "auth_signup_done": "Go dirilwe. Ge e le gore imeile ye ke ye mpsha, akhaonto ya gago e lokile (lebelela imeile ya gago ge re kgopela go netefatša). Ge o šetše o na le akhaonto, šomiša phasewete ya yona. Kgotla Tsena go tšwela pele."
+  "auth_signup_done": "Go dirilwe. Ge e le gore imeile ye ke ye mpsha, akhaonto ya gago e lokile (lebelela imeile ya gago ge re kgopela go netefatša). Ge o šetše o na le akhaonto, šomiša phasewete ya yona. Kgotla Tsena go tšwela pele.",
+  "greet_morning": "Dumela mesong, {name}",
+  "greet_afternoon": "Dumela mathapama, {name}",
+  "greet_evening": "Dumela mantšiboa, {name}",
+  "greet_morning_plain": "Dumela mesong",
+  "greet_afternoon_plain": "Dumela mathapama",
+  "greet_evening_plain": "Dumela mantšiboa"
 }

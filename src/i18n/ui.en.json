@@ -414,5 +414,11 @@
   "tx_today": "Today",
   "tx_from_slip": "Saved from a slip",
   "privacy_slips_h": "Photos of slips",
-  "privacy_slips_b": "Photos and PDFs of slips are read once to fill in your entry and are not kept. They are sent to Anthropic (Claude) for reading, then thrown away; only the entry you check and save is stored. Card, token, account and ID numbers are hidden and never saved."
+  "privacy_slips_b": "Photos and PDFs of slips are read once to fill in your entry and are not kept. They are sent to Anthropic (Claude) for reading, then thrown away; only the entry you check and save is stored. Card, token, account and ID numbers are hidden and never saved.",
+  "greet_morning": "Good morning, {name}",
+  "greet_afternoon": "Good afternoon, {name}",
+  "greet_evening": "Good evening, {name}",
+  "greet_morning_plain": "Good morning",
+  "greet_afternoon_plain": "Good afternoon",
+  "greet_evening_plain": "Good evening"
 }

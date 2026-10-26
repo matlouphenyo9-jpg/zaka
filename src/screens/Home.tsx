@@ -12,6 +12,7 @@ import { todaySA } from '../lib/dates';
 import { BalanceCard } from '../components/Balance';
 import type { ConfidenceLevel } from '../engine/forecast';
 import { FLAGS } from '../lib/flags';
+import { greetingKey } from '../lib/greeting';
 
 const CONF_TONE: Record<ConfidenceLevel, string> = { low: 'bg-amber-soft text-amber-ink', medium: 'bg-ink/5 text-ink', high: 'bg-teal-soft text-teal-dark' };
 const CONF_BARS: Record<ConfidenceLevel, number> = { low: 1, medium: 2, high: 3 };
@@ -72,7 +73,7 @@ export function HomeScreen() {
           <Icon name="offline" size={20} /> {t('last_saved')}
         </p>
       )}
-      {name && <p className="text-lg font-semibold text-ink-soft">{name}</p>}
+      <p className="text-lg font-semibold text-ink-soft" data-testid="greeting">{name ? tu(greetingKey(), { name }) : tu(`${greetingKey()}_plain`)}</p>
 
       {/* The one big number */}
       <section className="relative overflow-hidden rounded-[1.75rem] bg-ink px-5 pb-5 pt-6 text-white shadow-card">
